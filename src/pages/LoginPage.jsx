@@ -90,22 +90,7 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="relative z-10 grid grid-cols-3 gap-6 animate-fade-in-up delay-200">
-          {[
-            { val: '500+', label: 'Successful Transfers' },
-            { val: '18+', label: 'Regions' },
-            { val: '24/7', label: 'Active Matching' }
-          ].map((s, i) => (
-            <div key={i} className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all">
-              <p className="text-3xl font-black text-white flex items-center gap-2">
-                 <span className="h-2 w-2 rounded-full bg-[#05D38A]" />
-                 {s.val}
-              </p>
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-2 ml-4">{s.label}</p>
-            </div>
-          ))}
-        </div>
+        {/* Stats Section Removed */}
       </div>
 
       {/* Right Panel — Login Form */}
@@ -241,6 +226,15 @@ const LoginPage = () => {
               <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
                 <UserCheck className="h-4 w-4" /> Verified Platform
               </div>
+            </div>
+
+            {/* Legal Links Footer */}
+            <div className="mt-8 pt-4 border-t border-slate-100/50 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <Link to="/terms" className="hover:text-[#002B5B] transition-colors">Terms of Service</Link>
+              <span className="text-slate-200">•</span>
+              <Link to="/terms" className="hover:text-[#002B5B] transition-colors">Privacy Policy</Link>
+              <span className="text-slate-200">•</span>
+              <Link to="/terms" className="hover:text-[#002B5B] transition-colors">Disclaimer</Link>
             </div>
           </div>
         </div>

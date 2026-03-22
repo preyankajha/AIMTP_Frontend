@@ -63,7 +63,7 @@ const HelpPage = () => (
     {/* Developer Info */}
     <div className="mt-8 bg-primary-50 border border-primary-100 rounded-[1.5rem] p-6">
       <p className="text-sm text-primary-800 font-medium">
-        <span className="font-black">Developed by</span> Priyanka Jha · This platform is independently operated and domain-neutral.
+        <span className="font-black">Developed by</span> Saurav Kr Mishra · This platform is independently operated and domain-neutral.
       </p>
     </div>
   </div>

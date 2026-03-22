@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, FileText, AlertTriangle, ArrowLeft, Lock, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const TermsPage = () => {
@@ -11,16 +11,18 @@ const TermsPage = () => {
   const [langDecl, setLangDecl] = useState('en');
   const [langTerms, setLangTerms] = useState('en');
   const [langDisc, setLangDisc] = useState('en');
+  const [langPrivacy, setLangPrivacy] = useState('en');
+  const [langRefund, setLangRefund] = useState('en');
 
   const LanguageToggle = ({ currentLang, setLang }) => (
     <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
-      <button 
+      <button
         onClick={() => setLang('en')}
         className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${currentLang === 'en' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
       >
         English
       </button>
-      <button 
+      <button
         onClick={() => setLang('hi')}
         className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${currentLang === 'hi' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
       >
@@ -46,7 +48,7 @@ const TermsPage = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 pb-24 space-y-12">
-        
+
         {/* Page Intro */}
         <div className="text-center space-y-4 mb-4">
           <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Declaration, Terms & Disclaimer</h2>
@@ -69,7 +71,7 @@ const TermsPage = () => {
             </div>
             <LanguageToggle currentLang={langDecl} setLang={setLangDecl} />
           </div>
-          
+
           <div className="p-6 sm:p-8">
             {langDecl === 'en' ? (
               <ul className="space-y-4 text-slate-700 leading-relaxed font-medium animate-fade-in">
@@ -127,7 +129,7 @@ const TermsPage = () => {
             </div>
             <LanguageToggle currentLang={langTerms} setLang={setLangTerms} />
           </div>
-          
+
           <div className="p-6 sm:p-8">
             {langTerms === 'en' ? (
               <ol className="list-decimal list-outside ml-5 space-y-4 text-slate-700 leading-relaxed font-medium animate-fade-in">
@@ -171,7 +173,7 @@ const TermsPage = () => {
             </div>
             <LanguageToggle currentLang={langDisc} setLang={setLangDisc} />
           </div>
-          
+
           <div className="p-6 sm:p-8">
             <div className="bg-rose-50/50 p-6 rounded-2xl border border-rose-100">
               {langDisc === 'en' ? (
@@ -225,8 +227,59 @@ const TermsPage = () => {
           </div>
         </section>
 
+        {/* 4. Privacy Policy */}
+        <section className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-slate-50/50 border-b border-slate-100 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-100 text-blue-600 p-3 rounded-2xl">
+                <Lock className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">4. Privacy Policy</h3>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">गोपनीयता नीति</p>
+              </div>
+            </div>
+            <LanguageToggle currentLang={langPrivacy} setLang={setLangPrivacy} />
+          </div>
+
+          <div className="p-6 sm:p-8">
+            {langPrivacy === 'en' ? (
+              <ul className="space-y-4 text-slate-700 leading-relaxed font-medium animate-fade-in">
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>Information Collected:</strong> We may collect personal data inside employee records (Name, Contact Number, Email, Designation, working remarks) directly using your manual inputs to strictly perform matched indexing.</p>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>Data Usage:</strong> Your professional details represent essential data vectors on our facilitation software and are exclusively shown to matched partners on the application or public lists as necessary to reveal compatible matches.</p>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>We Don't Sell Data:</strong> AIMTP strictly respects explicitly strict privacy rules. We NEVER sell, lease, or distribute your credentials or telephone numbers to aggregators or marketers for monetary compensation.</p>
+                </li>
+              </ul>
+            ) : (
+              <ul className="space-y-4 text-slate-700 leading-relaxed font-medium text-lg animate-fade-in">
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>डेटा संग्रह (Information Collected):</strong> आवश्यकतानुसार, आपके द्वारा प्रदान की गई व्यक्तिगत जानकारी (जैसे नाम, नंबर, पीएफ नंबर, पद, विभाग इत्यादि) सीधे हमारे प्लेटफ़ॉर्म पर फ़िल्टर मैचिंग के प्रदर्शन हेतु सुरक्षित रूप से व्यवस्थित की जाती हैं।</p>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>डेटा का उपयोग (Data Usage):</strong> ट्रांसफ़र की खोज हेतु, आपके व्यावसायिक विवरण अन्य ट्रांसफ़र पार्टनर को हमारी मैचिंग एल्गो के माध्यम से उपयुक्त रूप से दिखाए जा सकते हैं।</p>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2.5"></div>
+                  <p><strong>कोई डेटा बिक्री नहीं (We Don't Sell):</strong> AIMTP आपके डेटा और गोपनीयता का सम्मान करता है। हम आपका नंबर या अन्य विवरण किसी भी थर्ड पार्टी (third party) या विज्ञापन कंपनियों को कभी नहीं बेचते हैं।</p>
+                </li>
+              </ul>
+            )}
+          </div>
+        </section>
+
+       
       </main>
-      
+
       {/* Footer minimal */}
       <footer className="bg-slate-900 py-8 border-t border-white/10 text-center text-slate-400 text-sm font-medium">
         <p>&copy; {new Date().getFullYear()} All India Mutual Transfer Portal. All rights reserved.</p>

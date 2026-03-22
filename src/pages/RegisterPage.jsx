@@ -155,16 +155,7 @@ const RegisterPage = () => {
           <p className="text-white/50 font-medium leading-relaxed">Create an account to post your transfer request and instantly get matched with compatible employees across India.</p>
         </div>
 
-        <div className="relative z-10">
-          <div className="grid grid-cols-3 gap-4">
-            {[{ val: '500+', label: 'Transfers' }, { val: '18+', label: 'Regions' }, { val: '24/7', label: 'Matching' }].map(s => (
-              <div key={s.label} className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                <p className="text-2xl font-black text-white">{s.val}</p>
-                <p className="text-white/40 text-xs font-bold uppercase tracking-wider mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Stats Section Removed */}
       </div>
 
       {/* Right Panel */}
@@ -263,6 +254,15 @@ const RegisterPage = () => {
                 Already have an account?{' '}
                 <Link to="/login" className="font-black text-primary-700 hover:text-primary-900 hover:underline">Sign in</Link>
               </p>
+
+              {/* Legal Links Footer */}
+              <div className="mt-6 pt-4 border-t border-slate-100/50 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <Link to="/terms" className="hover:text-primary-800 transition-colors">Terms</Link>
+                <span className="text-slate-200">•</span>
+                <Link to="/terms" className="hover:text-primary-800 transition-colors">Privacy</Link>
+                <span className="text-slate-200">•</span>
+                <Link to="/terms" className="hover:text-primary-800 transition-colors">Disclaimer</Link>
+              </div>
             </form>
           </div>
         </div>

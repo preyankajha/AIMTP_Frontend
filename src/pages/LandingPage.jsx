@@ -25,16 +25,16 @@ const LandingPage = () => {
     sector: ''
   });
 
-  const { 
-    loading: masterLoading, 
-    regionData, 
-    sectors, 
+  const {
+    loading: masterLoading,
+    regionData,
+    sectors,
     getZoneList,
-    departments 
+    departments
   } = useMasterData();
 
   const zoneList = getZoneList();
-  
+
   // From Lists
   const divisionList = filters.zone && regionData?.[filters.zone] ? Object.keys(regionData[filters.zone].divisions) : [];
   const stationList = filters.zone && filters.division && regionData?.[filters.zone]?.divisions[filters.division] ? regionData[filters.zone].divisions[filters.division] : [];
@@ -79,18 +79,18 @@ const LandingPage = () => {
 
   const handleModeChange = (mode) => {
     setSearchMode(mode);
-    setFilters({ 
-      zone: '', division: '', station: '', 
-      desiredZone: '', desiredDivision: '', desiredStation: '', 
+    setFilters({
+      zone: '', division: '', station: '',
+      desiredZone: '', desiredDivision: '', desiredStation: '',
       designation: filters.designation,
       sector: filters.sector
     });
   };
 
   const resetFilters = () => {
-    setFilters({ 
-      zone: '', division: '', station: '', 
-      desiredZone: '', desiredDivision: '', desiredStation: '', 
+    setFilters({
+      zone: '', division: '', station: '',
+      desiredZone: '', desiredDivision: '', desiredStation: '',
       designation: '',
       sector: ''
     });
@@ -99,7 +99,7 @@ const LandingPage = () => {
 
   const handleSearch = () => {
     let result = transfers;
-    
+
     // Mode specific filtering
     if (searchMode === 'any') {
       if (filters.zone) result = result.filter(t => t.currentZone === filters.zone);
@@ -110,7 +110,7 @@ const LandingPage = () => {
       if (filters.zone) result = result.filter(t => t.currentZone === filters.zone);
       if (filters.division) result = result.filter(t => t.currentDivision === filters.division);
       if (filters.station) result = result.filter(t => t.currentStation === filters.station);
-      
+
       if (filters.desiredZone) result = result.filter(t => t.desiredZone === filters.desiredZone);
       if (filters.desiredDivision) result = result.filter(t => t.desiredDivision === filters.desiredDivision);
       if (filters.desiredStation) result = result.filter(t => t.desiredStation === filters.desiredStation);
@@ -119,7 +119,7 @@ const LandingPage = () => {
     // Common filters
     if (filters.designation) result = result.filter(t => t.designation === filters.designation);
     if (filters.sector) result = result.filter(t => t.sector === filters.sector);
-    
+
     setFilteredTransfers(result);
   };
 
@@ -226,14 +226,14 @@ const LandingPage = () => {
             {/* Filter Toggle & Mode Container */}
             <div className="flex flex-col gap-6 mb-12">
               <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full md:w-80 self-center shadow-inner">
-                <button 
+                <button
                   onClick={() => handleModeChange('any')}
                   className={`flex-1 flex items-center justify-center gap-2 text-sm font-black py-3 rounded-xl transition-all ${searchMode === 'any' ? 'bg-white shadow-md text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   <MapPin className="h-4 w-4" />
                   In Location
                 </button>
-                <button 
+                <button
                   onClick={() => handleModeChange('route')}
                   className={`flex-1 flex items-center justify-center gap-2 text-sm font-black py-3 rounded-xl transition-all ${searchMode === 'route' ? 'bg-white shadow-md text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
                 >
@@ -242,197 +242,197 @@ const LandingPage = () => {
                 </button>
               </div>
 
-            {/* Filter Bar Content */}
-            <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8 animate-fade-in transition-all">
-              <div className="flex flex-col gap-8">
-                {/* Step 1: Sector Selection */}
-                <div className="space-y-3 pb-6 border-b border-slate-100">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">1. Choose Working Sector</label>
-                  <div className="relative max-w-md">
-                    <select
-                      name="sector"
-                      value={filters.sector}
-                      onChange={handleFilterChange}
-                      title={filters.sector}
-                      className="w-full pl-4 pr-10 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm transition-all"
-                    >
-                      <option value="">Select Sector</option>
-                      {sectors?.map(group => (
-                        <optgroup key={group.group} label={group.group}>
-                          {group.options.map(opt => (
-                            <option 
-                              key={opt.value} 
-                              value={opt.value}
-                              className={!opt.active ? 'text-slate-400 font-normal italic' : ''}
-                              style={!opt.active ? { color: '#94a3b8' } : {}}
+              {/* Filter Bar Content */}
+              <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8 animate-fade-in transition-all">
+                <div className="flex flex-col gap-8">
+                  {/* Step 1: Sector Selection */}
+                  <div className="space-y-3 pb-6 border-b border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">1. Choose Working Sector</label>
+                    <div className="relative max-w-md">
+                      <select
+                        name="sector"
+                        value={filters.sector}
+                        onChange={handleFilterChange}
+                        title={filters.sector}
+                        className="w-full pl-4 pr-10 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm transition-all"
+                      >
+                        <option value="">Select Sector</option>
+                        {sectors?.map(group => (
+                          <optgroup key={group.group} label={group.group}>
+                            {group.options.map(opt => (
+                              <option
+                                key={opt.value}
+                                value={opt.value}
+                                className={!opt.active ? 'text-slate-400 font-normal italic' : ''}
+                                style={!opt.active ? { color: '#94a3b8' } : {}}
+                              >
+                                {opt.label} {!opt.active ? '(Soon)' : ''}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {filters.sector === '' ? (
+                    /* Initial Prompt */
+                    <div className="py-20 text-center">
+                      <div className="h-20 w-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Search className="h-10 w-10 text-primary-300" />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-2">Ready to search?</h3>
+                      <p className="text-slate-500 font-medium max-w-sm mx-auto">Please select a sector first to unlock advanced filters and find your partner.</p>
+                    </div>
+                  ) : filters.sector !== 'Railway' ? (
+                    /* Coming Soon for other sectors */
+                    <div className="py-12 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                      <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <Activity className="h-7 w-7 text-slate-300" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-1">Coming Soon!</h3>
+                      <p className="text-slate-500 font-medium">The {filters.sector} sector is currently under development.</p>
+                    </div>
+                  ) : (
+                    /* Advanced Filters for Railway */
+                    <div className="flex flex-col gap-8 animate-fade-in">
+                      {searchMode === 'any' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Region</label>
+                            <div className="relative">
+                              <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate">
+                                <option value="">Any Region</option>
+                                {zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Division</label>
+                            <div className="relative">
+                              <select name="division" value={filters.division} onChange={handleFilterChange} disabled={!filters.zone} title={filters.division} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
+                                <option value="">Any Division</option>
+                                {divisionList.map(d => <option key={d} value={d}>{d}</option>)}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Station</label>
+                            <div className="relative">
+                              <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
+                                <option value="">Any Station</option>
+                                {stationList.map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-8">
+                          {/* FROM Row */}
+                          <div className="flex justify-start w-full">
+                            <div className="w-full lg:w-[92%] bg-slate-50/80 p-5 rounded-2xl border border-slate-100 flex flex-col gap-3 relative shadow-sm">
+                              <div className="absolute -top-3 left-6 bg-slate-800 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">FROM</div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Region</label>
+                                  <div className="relative">
+                                    <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Division</label>
+                                  <div className="relative">
+                                    <select name="division" value={filters.division} onChange={handleFilterChange} disabled={!filters.zone} title={filters.division} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Division</option>{divisionList.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Station</label>
+                                  <div className="relative">
+                                    <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{stationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* TO Row */}
+                          <div className="flex justify-end w-full">
+                            <div className="w-full lg:w-[92%] bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100 flex flex-col gap-3 relative shadow-sm">
+                              <div className="absolute -top-3 right-6 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">TO</div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Region</label>
+                                  <div className="relative">
+                                    <select name="desiredZone" value={filters.desiredZone} onChange={handleFilterChange} title={filters.desiredZone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Division</label>
+                                  <div className="relative">
+                                    <select name="desiredDivision" value={filters.desiredDivision} onChange={handleFilterChange} disabled={!filters.desiredZone} title={filters.desiredDivision} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Division</option>{desiredDivisionList.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Station</label>
+                                  <div className="relative">
+                                    <select name="desiredStation" value={filters.desiredStation} onChange={handleFilterChange} disabled={!filters.desiredDivision} title={filters.desiredStation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{desiredStationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Common Bottom Row: Designation & Actions */}
+                      <div className="flex flex-col md:flex-row items-end gap-6 pt-4 border-t border-slate-100">
+                        <div className="flex-1 w-full space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Search by Designation</label>
+                          <div className="relative">
+                            <select
+                              name="designation"
+                              value={filters.designation}
+                              onChange={handleFilterChange}
+                              title={filters.designation}
+                              className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"
                             >
-                              {opt.label} {!opt.active ? '(Soon)' : ''}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                {filters.sector === '' ? (
-                  /* Initial Prompt */
-                  <div className="py-20 text-center">
-                    <div className="h-20 w-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Search className="h-10 w-10 text-primary-300" />
-                    </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-2">Ready to search?</h3>
-                    <p className="text-slate-500 font-medium max-w-sm mx-auto">Please select a sector first to unlock advanced filters and find your partner.</p>
-                  </div>
-                ) : filters.sector !== 'Railway' ? (
-                  /* Coming Soon for other sectors */
-                  <div className="py-12 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                    <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                      <Activity className="h-7 w-7 text-slate-300" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">Coming Soon!</h3>
-                    <p className="text-slate-500 font-medium">The {filters.sector} sector is currently under development.</p>
-                  </div>
-                ) : (
-                  /* Advanced Filters for Railway */
-                  <div className="flex flex-col gap-8 animate-fade-in">
-                    {searchMode === 'any' ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Region</label>
-                          <div className="relative">
-                            <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate">
-                              <option value="">Any Region</option>
-                              {zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
+                              <option value="">All Designations</option>
+                              {uniqueDesignations.map(d => <option key={d} value={d}>{d}</option>)}
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Division</label>
-                          <div className="relative">
-                            <select name="division" value={filters.division} onChange={handleFilterChange} disabled={!filters.zone} title={filters.division} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
-                              <option value="">Any Division</option>
-                              {divisionList.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Station</label>
-                          <div className="relative">
-                            <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
-                              <option value="">Any Station</option>
-                              {stationList.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-8">
-                        {/* FROM Row */}
-                        <div className="flex justify-start w-full">
-                          <div className="w-full lg:w-[92%] bg-slate-50/80 p-5 rounded-2xl border border-slate-100 flex flex-col gap-3 relative shadow-sm">
-                            <div className="absolute -top-3 left-6 bg-slate-800 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">FROM</div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Region</label>
-                                <div className="relative">
-                                  <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Division</label>
-                                <div className="relative">
-                                  <select name="division" value={filters.division} onChange={handleFilterChange} disabled={!filters.zone} title={filters.division} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Division</option>{divisionList.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Station</label>
-                                <div className="relative">
-                                  <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{stationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* TO Row */}
-                        <div className="flex justify-end w-full">
-                          <div className="w-full lg:w-[92%] bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100 flex flex-col gap-3 relative shadow-sm">
-                            <div className="absolute -top-3 right-6 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">TO</div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Region</label>
-                                <div className="relative">
-                                  <select name="desiredZone" value={filters.desiredZone} onChange={handleFilterChange} title={filters.desiredZone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Division</label>
-                                <div className="relative">
-                                  <select name="desiredDivision" value={filters.desiredDivision} onChange={handleFilterChange} disabled={!filters.desiredZone} title={filters.desiredDivision} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Division</option>{desiredDivisionList.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Station</label>
-                                <div className="relative">
-                                  <select name="desiredStation" value={filters.desiredStation} onChange={handleFilterChange} disabled={!filters.desiredDivision} title={filters.desiredStation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{desiredStationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Common Bottom Row: Designation & Actions */}
-                    <div className="flex flex-col md:flex-row items-end gap-6 pt-4 border-t border-slate-100">
-                      <div className="flex-1 w-full space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Search by Designation</label>
-                        <div className="relative">
-                          <select
-                            name="designation"
-                            value={filters.designation}
-                            onChange={handleFilterChange}
-                            title={filters.designation}
-                            className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"
+                        <div className="flex gap-3 w-full md:w-auto">
+                          <button
+                            onClick={handleSearch}
+                            className="flex-1 md:w-56 h-[46px] flex items-center justify-center gap-2 bg-primary-900 hover:bg-slate-900 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-primary-900/10 active:scale-95"
                           >
-                            <option value="">All Designations</option>
-                            {uniqueDesignations.map(d => <option key={d} value={d}>{d}</option>)}
-                          </select>
-                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <Search className="h-4 w-4" />
+                            Search Transfers
+                          </button>
+                          <button
+                            onClick={resetFilters}
+                            className="h-[46px] w-[46px] flex items-center justify-center bg-slate-100 border border-slate-200 rounded-xl text-slate-500 hover:text-red-600 transition-all hover:bg-red-50 hover:border-red-100"
+                            title="Reset Filters"
+                          >
+                            <RotateCcw className="h-5 w-5" />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex gap-3 w-full md:w-auto">
-                        <button
-                          onClick={handleSearch}
-                          className="flex-1 md:w-56 h-[46px] flex items-center justify-center gap-2 bg-primary-900 hover:bg-slate-900 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-primary-900/10 active:scale-95"
-                        >
-                          <Search className="h-4 w-4" />
-                          Search Transfers
-                        </button>
-                        <button
-                          onClick={resetFilters}
-                          className="h-[46px] w-[46px] flex items-center justify-center bg-slate-100 border border-slate-200 rounded-xl text-slate-500 hover:text-red-600 transition-all hover:bg-red-50 hover:border-red-100"
-                          title="Reset Filters"
-                        >
-                          <RotateCcw className="h-5 w-5" />
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
             </div>
 
             {loading ? (
@@ -656,9 +656,9 @@ const LandingPage = () => {
               <p>© {new Date().getFullYear()} All India Mututal Transfer Portal. All rights reserved. This platform is domain-neutral.</p>
               <div className="flex items-center gap-2 opacity-60">
                 <span>Developed by</span>
-                <span className="text-primary-700">Priyanka Jha</span>
+                <span className="text-primary-700">Saurav Kr Mishra</span>
                 <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
-                <a href="mailto:preyankajha@gmail.com" className="hover:text-primary-700 transition-colors lowercase">preyankajha@gmail.com</a>
+                <a href="mailto:imsauravkrmishra@gmail.com" className="hover:text-primary-700 transition-colors lowercase">imsauravkrmishra@gmail.com</a>
               </div>
             </div>
           </div>
