@@ -126,6 +126,20 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
             )}
           </div>
 
+          {/* Remarks Section */}
+          {transfer.workplaceRemark && (
+            <div className="mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 text-amber-900 relative overflow-hidden group/remark">
+              <div className="absolute top-0 right-0 p-2 opacity-10 blur-[1px] transform group-hover/remark:scale-150 transition-all duration-700">
+                <Info className="h-20 w-20 text-amber-500" />
+              </div>
+              <Info className="h-5 w-5 text-amber-500 shrink-0 relative z-10" />
+              <div className="relative z-10">
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-amber-500/80 mb-1">Remarks / Note</h4>
+                <p className="text-xs font-medium leading-relaxed italic opacity-90">{transfer.workplaceRemark}</p>
+              </div>
+            </div>
+          )}
+
           {/* Contact Placeholder */}
           <div className="flex items-center gap-3 py-3 px-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
             <div className="h-10 w-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
@@ -333,6 +347,17 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
                 <span className="font-extrabold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100">₹ {Number(transfer.basicPay).toLocaleString()}</span>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Remarks Section for Non-Public View */}
+        {transfer.workplaceRemark && (
+          <div className="mt-4 p-3 bg-amber-50/50 rounded-xl border border-amber-100/50 flex gap-2.5">
+            <Info className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[10px] uppercase font-black tracking-widest text-amber-500/80 mb-0.5">Note</p>
+              <p className="text-xs text-amber-900/80 font-medium italic">{transfer.workplaceRemark}</p>
+            </div>
           </div>
         )}
       </div>

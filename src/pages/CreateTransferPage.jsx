@@ -76,6 +76,7 @@ const CreateTransferPage = () => {
     gradePay: '',
     basicPay: '',
     category: '',
+    workplaceRemark: '',
   });
 
   // States for "Other" custom inputs
@@ -127,6 +128,8 @@ const CreateTransferPage = () => {
         payLevel: user.payLevel || prev.payLevel,
         gradePay: user.gradePay || prev.gradePay,
         basicPay: user.basicPay || prev.basicPay,
+        category: user.category || prev.category,
+        workplaceRemark: user.workplaceRemark || prev.workplaceRemark,
       }));
     }
   }, [user, isEditMode, masterLoading]);
@@ -311,6 +314,7 @@ const CreateTransferPage = () => {
           newFormData.payLevel = data.payLevel || '';
           newFormData.basicPay = data.basicPay || '';
           newFormData.category = data.category || '';
+          newFormData.workplaceRemark = data.workplaceRemark || '';
 
           setFormData(newFormData);
           setOtherInputs(newOtherInputs);
@@ -342,6 +346,8 @@ const CreateTransferPage = () => {
         payLevel: user.payLevel,
         gradePay: user.gradePay,
         basicPay: user.basicPay,
+        category: user.category,
+        workplaceRemark: user.workplaceRemark,
       }));
       return; // Skip the reset logic below
     }
@@ -404,7 +410,7 @@ const CreateTransferPage = () => {
       }
       
       // Update local profile context so it reflects the new linked data
-      const profileFields = ['sector', 'department', 'subDepartment', 'designation', 'currentZone', 'currentDivision', 'currentStation', 'payLevel', 'gradePay', 'basicPay', 'category'];
+      const profileFields = ['sector', 'department', 'subDepartment', 'designation', 'currentZone', 'currentDivision', 'currentStation', 'payLevel', 'gradePay', 'basicPay', 'category', 'workplaceRemark'];
       const profileUpdates = {};
       profileFields.forEach(f => {
         if (finalData[f] !== undefined) profileUpdates[f] = finalData[f];
@@ -686,6 +692,20 @@ const CreateTransferPage = () => {
                     onChange={handleChange}
                     placeholder="Select Category"
                   />
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <label className="block text-sm font-bold text-slate-700">Working Condition Remarks <span className="text-red-500">*</span></label>
+                  <textarea 
+                    name="workplaceRemark" 
+                    value={formData.workplaceRemark} 
+                    onChange={handleChange}
+                    required
+                    maxLength={300}
+                    placeholder="Briefly describe the working conditions, duty type, or any other relevant details about your current posting..."
+                    className="block w-full px-4 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm resize-none h-24"
+                  />
+                  <p className="text-[10px] text-slate-400 font-bold text-right">{formData.workplaceRemark?.length || 0}/300 characters</p>
                 </div>
 
                 {/* Identification / Current Posting Block */}

@@ -57,7 +57,8 @@ const SettingsPage = () => {
     payLevel: user?.payLevel || '',
     gradePay: user?.gradePay || '',
     basicPay: user?.basicPay || '',
-    category: user?.category || ''
+    category: user?.category || '',
+    workplaceRemark: user?.workplaceRemark || ''
   });
 
   const [otherValues, setOtherValues] = useState({
@@ -194,7 +195,8 @@ const SettingsPage = () => {
       payLevel: user?.payLevel || '',
       gradePay: user?.gradePay || '',
       basicPay: user?.basicPay || '',
-      category: user?.category || ''
+      category: user?.category || '',
+      workplaceRemark: user?.workplaceRemark || ''
     });
     setIsEditing(false);
     setProfileStatus(null);
@@ -475,6 +477,22 @@ const SettingsPage = () => {
                               />
                             )}
                           </div>
+                        </div>
+
+                        {/* Workplace Remark Section */}
+                        <div className="mt-6 space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Working Condition Remarks <span className="text-red-500">*</span></label>
+                          <textarea 
+                            name="workplaceRemark" 
+                            value={profileForm.workplaceRemark} 
+                            onChange={handleProfileChange}
+                            required
+                            disabled={!isEditing}
+                            maxLength={300}
+                            placeholder="Briefly describe the working conditions, duty type, or any other relevant details about your current posting..."
+                            className={`w-full px-4 py-3 ${!isEditing ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/20 resize-none h-24`}
+                          />
+                          <p className="text-[10px] text-slate-400 font-bold ml-1 text-right">{profileForm.workplaceRemark?.length || 0}/300 characters</p>
                         </div>
                       </div>
 

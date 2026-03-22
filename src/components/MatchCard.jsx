@@ -75,6 +75,22 @@ const MatchCard = ({ match, onContactRevealed }) => {
             </div>
           </div>
         </div>
+        {/* Remarks Section */}
+        {match.partnerRequest?.workplaceRemark && (
+          <div className="mt-4 p-3 bg-amber-50/50 rounded-xl border border-amber-100/50 flex gap-2.5">
+            <div className="shrink-0 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-black tracking-widest text-amber-500/80 mb-0.5">Working Condition Note</p>
+              <p className="text-xs text-amber-900/80 font-medium italic">{match.partnerRequest.workplaceRemark}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Area */}
