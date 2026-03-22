@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useGoogleLogin } from '@react-oauth/google';
 import { Repeat, ArrowRight, ShieldCheck, UserCheck, Mail, Lock, User, Phone, Eye, EyeOff, Briefcase, MapPin, Building, Globe, ChevronRight } from 'lucide-react';
 
 const InputField = ({ name, label, value, onChange, type = 'text', placeholder = '', icon: Icon }) => (
@@ -37,8 +38,24 @@ const RegisterPage = () => {
   const [acceptedDeclaration, setAcceptedDeclaration] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [language, setLanguage] = useState('en');
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleAuth = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        setError('');
+        await googleLogin(tokenResponse.access_token);
+        navigate('/dashboard');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to sign up with Google.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError('Google Signup Failed')
+  });
 
   const termsContent = {
     en: {
@@ -226,7 +243,23 @@ const RegisterPage = () => {
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="h-4 w-4" /> Create Account</>}
               </button>
 
-              <p className="text-center text-sm text-slate-500 pt-4 border-t border-slate-100 font-medium">
+              <div className="mt-6 flex items-center justify-center gap-4">
+                <div className="h-px flex-1 bg-slate-100" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">or sign up with</span>
+                <div className="h-px flex-1 bg-slate-100" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGoogleAuth()}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-4 group"
+              >
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5" />
+                Google
+              </button>
+
+              <p className="text-center text-sm text-slate-500 pt-4 border-t border-slate-100 font-medium mt-6">
                 Already have an account?{' '}
                 <Link to="/login" className="font-black text-primary-700 hover:text-primary-900 hover:underline">Sign in</Link>
               </p>

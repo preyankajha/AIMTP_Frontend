@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useGoogleLogin } from '@react-oauth/google';
 import { Repeat, ArrowRight, Eye, EyeOff, ShieldCheck, Zap, UserCheck } from 'lucide-react';
 
 const LoginPage = () => {
@@ -9,8 +10,25 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleAuth = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        setError('');
+        await googleLogin(tokenResponse.access_token);
+        navigate('/dashboard');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to login with Google.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError('Google Login Failed')
+  });
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -183,6 +201,22 @@ const LoginPage = () => {
               ) : (
                 <>Sign In <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>
               )}
+            </button>
+
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <div className="h-px flex-1 bg-slate-100" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">or sign in with</span>
+              <div className="h-px flex-1 bg-slate-100" />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleGoogleAuth()}
+              disabled={loading}
+              className="mt-6 w-full flex items-center justify-center gap-3 py-4 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-2xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group"
+            >
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5" />
+              Google
             </button>
           </form>
 
