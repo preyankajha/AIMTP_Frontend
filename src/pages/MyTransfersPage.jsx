@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getMyTransfers, deleteTransfer } from '../services/transferService';
+import { getMyTransfers, updateTransferStatus } from '../services/transferService';
 import TransferCard from '../components/TransferCard';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, X, Loader2 } from 'lucide-react';
 
 const MyTransfersPage = () => {
   const [transfers, setTransfers] = useState([]);
@@ -10,6 +10,8 @@ const MyTransfersPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => { fetchTransfers(); }, []);
+
+  const [statusModal, setStatusModal] = useState({ isOpen: false, transferId: null, currentStatus: '', newStatus: '', remark: '', loading: false });
 
   const fetchTransfers = async () => {
     try {
@@ -22,14 +24,40 @@ const MyTransfersPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to cancel this transfer request?')) {
-      try {
-        await deleteTransfer(id);
-        setTransfers(transfers.filter((t) => t._id !== id));
-      } catch (err) {
-        alert('Failed to delete transfer request. Please try again.');
-      }
+  const openStatusModal = (transfer) => {
+    setStatusModal({ 
+      isOpen: true, 
+      transferId: transfer._id, 
+      currentStatus: transfer.status,
+      newStatus: transfer.status, 
+      remark: transfer.statusRemark || '', 
+      loading: false 
+    });
+  };
+
+  const handleStatusUpdate = async (e) => {
+    e.preventDefault();
+    if (!statusModal.newStatus || statusModal.newStatus === statusModal.currentStatus) {
+      alert('Please select a new status.');
+      return;
+    }
+    if (!statusModal.remark || statusModal.remark.trim() === '') {
+      alert('A remark is required.');
+      return;
+    }
+
+    try {
+      setStatusModal(prev => ({ ...prev, loading: true }));
+      const updatedData = await updateTransferStatus(statusModal.transferId, { 
+        status: statusModal.newStatus, 
+        statusRemark: statusModal.remark 
+      });
+      
+      setTransfers(transfers.map(t => t._id === statusModal.transferId ? updatedData.transfer : t));
+      setStatusModal({ isOpen: false, transferId: null, currentStatus: '', newStatus: '', remark: '', loading: false });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status. Please try again.');
+      setStatusModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -89,10 +117,62 @@ const MyTransfersPage = () => {
             <TransferCard
               key={transfer._id}
               transfer={transfer}
-              onDelete={handleDelete}
+              onChangeStatus={() => openStatusModal(transfer)}
               isOwnRequest={true}
             />
           ))}
+        </div>
+      )}
+
+      {/* Status Update Modal */}
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !statusModal.loading && setStatusModal(prev => ({ ...prev, isOpen: false }))}></div>
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 relative z-10 shadow-2xl animate-fade-in border border-slate-100">
+            <button 
+              onClick={() => !statusModal.loading && setStatusModal(prev => ({ ...prev, isOpen: false }))}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-all"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <h2 className="text-xl font-black text-slate-900 mb-1 tracking-tight">Update Request Status</h2>
+            <p className="text-xs font-bold text-slate-500 mb-6 tracking-wide">Change the visibility and state of this request.</p>
+
+            <form onSubmit={handleStatusUpdate} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400">New Status</label>
+                <select 
+                  value={statusModal.newStatus}
+                  onChange={(e) => setStatusModal(prev => ({ ...prev, newStatus: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm font-bold rounded-xl focus:ring-primary-500 focus:border-primary-500 block px-4 py-3 appearance-none shadow-sm"
+                  required
+                >
+                  <option value="active" disabled={statusModal.currentStatus === 'active'}>Active</option>
+                  <option value="inactive" disabled={statusModal.currentStatus === 'inactive'}>Inactive / Disabled</option>
+                  <option value="partner_found" disabled={statusModal.currentStatus === 'partner_found'}>Found Mutual Partner</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400">Remark / Reason</label>
+                <textarea 
+                  value={statusModal.remark}
+                  onChange={(e) => setStatusModal(prev => ({ ...prev, remark: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm font-medium rounded-xl focus:ring-primary-500 focus:border-primary-500 block px-4 py-3 placeholder-slate-400 resize-none h-24 shadow-sm"
+                  placeholder="E.g. Temporarily pausing search, or found a match externally..."
+                  required
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={statusModal.loading}
+                className="w-full flex items-center justify-center gap-2 text-white bg-primary-900 hover:bg-slate-900 px-5 py-3.5 rounded-xl font-black text-sm transition-all shadow-lg shadow-primary-900/10 disabled:opacity-50 mt-2"
+              >
+                {statusModal.loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm Status Change'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

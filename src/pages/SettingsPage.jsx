@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Settings, Bell, Lock, Shield, Eye, EyeOff, CheckCircle2, AlertCircle, KeyRound, Building2, Briefcase, MapPin, User, Save, Loader2, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings, Bell, Lock, Shield, Eye, EyeOff, CheckCircle2, AlertCircle, KeyRound, Building2, Briefcase, MapPin, User, Save, Loader2, ChevronDown, CheckCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { changePassword, updateProfile } from '../services/authService';
 import { useMasterData } from '../context/MasterDataContext';
+import SearchableSelect from '../components/SearchableSelect';
 
 // ── tiny reusable password input ───────────────────────────────────────────
 const PasswordInput = ({ id, label, value, onChange, placeholder }) => {
@@ -53,12 +54,17 @@ const SettingsPage = () => {
     designation: user?.designation || '',
     currentZone: user?.currentZone || '',
     currentDivision: user?.currentDivision || '',
+    currentWorkstation: user?.currentWorkstation || '',
+    currentLocation: user?.currentLocation || '',
     currentStation: user?.currentStation || '',
     payLevel: user?.payLevel || '',
     gradePay: user?.gradePay || '',
     basicPay: user?.basicPay || '',
     category: user?.category || '',
-    workplaceRemark: user?.workplaceRemark || ''
+    modeOfSelection: user?.modeOfSelection || '',
+    workplaceRemark: user?.workplaceRemark || '',
+    mobile: user?.mobile || '',
+    whatsapp: user?.whatsapp || ''
   });
 
   const [otherValues, setOtherValues] = useState({
@@ -67,8 +73,10 @@ const SettingsPage = () => {
     designation: '',
     currentZone: '',
     currentDivision: '',
-    currentStation: '',
-    category: ''
+    currentWorkstation: '',
+    currentLocation: '',
+    category: '',
+    modeOfSelection: ''
   });
 
   const { 
@@ -78,11 +86,21 @@ const SettingsPage = () => {
     sectors, 
     categories, 
     payLevels, 
-    getZoneList 
+    modeOfSelection,
+    getZoneList,
+    workstationTypes 
   } = useMasterData();
 
   const [profileStatus, setProfileStatus] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const toastTimer = useRef(null);
+
+  const triggerToast = () => {
+    setShowToast(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setShowToast(false), 3000);
+  };
 
   useEffect(() => {
     if (user && !isProfileComplete) {
@@ -114,10 +132,12 @@ const SettingsPage = () => {
         checkOther('currentDivision', user.currentDivision, divisions);
       }
 
-      // Station
+      // Workstation & Location
       if (user.currentZone && user.currentDivision && regionData[user.currentZone]?.divisions?.[user.currentDivision]) {
-        const stations = regionData[user.currentZone].divisions[user.currentDivision];
-        checkOther('currentStation', user.currentStation, stations);
+        const workstations = Object.keys(regionData[user.currentZone].divisions[user.currentDivision]);
+        checkOther('currentWorkstation', user.currentWorkstation, workstations);
+        const locations = user.currentWorkstation ? regionData[user.currentZone].divisions[user.currentDivision][user.currentWorkstation] || [] : [];
+        checkOther('currentLocation', user.currentLocation, locations);
       }
 
       // Department
@@ -138,6 +158,15 @@ const SettingsPage = () => {
 
       // Category
       checkOther('category', user.category, categories);
+      
+      // Mode of Selection — modeOfSelection is [{value, label}], so check by value
+      if (user.modeOfSelection && Array.isArray(modeOfSelection) && modeOfSelection.length > 0) {
+        const found = modeOfSelection.some(m => m.value === user.modeOfSelection);
+        if (!found) {
+          updates['modeOfSelection'] = user.modeOfSelection;
+          formUpdates['modeOfSelection'] = 'Other';
+        }
+      }
 
       if (Object.keys(formUpdates).length > 0) {
         setOtherValues(prev => ({ ...prev, ...updates }));
@@ -149,15 +178,38 @@ const SettingsPage = () => {
   const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
   const handleProfileChange = (e) => {
-    const { name, value } = e.target;
+    // Check if e is a standard event or a direct value from SearchableSelect
+    const name = e.target ? e.target.name : null;
+    const value = e.target ? e.target.value : e;
+    
+    // If it's a SearchableSelect call, we need the name manually or use a wrapper
+    // But since I'm calling it like handleProfileSelect('fieldName', val), I'll add that helper
     setProfileForm(prev => {
       const next = { ...prev, [name]: value };
-      if (name === 'sector') { next.currentZone = ''; next.currentDivision = ''; next.currentStation = ''; }
+      if (name === 'sector') { next.currentZone = ''; next.currentDivision = ''; next.currentWorkstation = ''; next.currentLocation = ''; }
       if (name === 'department') { next.subDepartment = ''; next.designation = ''; }
-      if (name === 'currentZone') { next.currentDivision = ''; next.currentStation = ''; }
-      if (name === 'currentDivision') { next.currentStation = ''; }
+      if (name === 'currentZone') { next.currentDivision = ''; next.currentWorkstation = ''; next.currentLocation = ''; }
+      if (name === 'currentDivision') { next.currentWorkstation = ''; next.currentLocation = ''; }
+      if (name === 'currentWorkstation') { next.currentLocation = ''; }
       return next;
     });
+  };
+
+  const handleProfileSelect = (name, value) => {
+    setProfileForm(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'sector') { next.currentZone = ''; next.currentDivision = ''; next.currentWorkstation = ''; next.currentLocation = ''; }
+      if (name === 'department') { next.subDepartment = ''; next.designation = ''; }
+      if (name === 'currentZone') { next.currentDivision = ''; next.currentWorkstation = ''; next.currentLocation = ''; }
+      if (name === 'currentDivision') { next.currentWorkstation = ''; next.currentLocation = ''; }
+      if (name === 'currentWorkstation') { next.currentLocation = ''; }
+      return next;
+    });
+    
+    // Clear custom "Other" input if "Other" is selected
+    if (value === 'Other') {
+      setOtherValues(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleProfileSubmit = async (e) => {
@@ -172,12 +224,17 @@ const SettingsPage = () => {
       }
     });
 
+    // Ensure currentStation is synced with currentLocation for completeness check
+    if (finalData.currentLocation) {
+      finalData.currentStation = finalData.currentLocation;
+    }
+
     try {
       const res = await updateProfile(finalData);
       updateUserProfile(res.user);
-      setProfileStatus('success');
+      triggerToast();
+      setProfileStatus(null);
       setIsEditing(false);
-      setTimeout(() => setProfileStatus(null), 3000);
     } catch (err) {
       setProfileStatus({ error: err.response?.data?.message || 'Failed to update profile.' });
     }
@@ -189,14 +246,18 @@ const SettingsPage = () => {
       department: user?.department || '',
       subDepartment: user?.subDepartment || '',
       designation: user?.designation || '',
+      modeOfSelection: user?.modeOfSelection || '',
       currentZone: user?.currentZone || '',
       currentDivision: user?.currentDivision || '',
-      currentStation: user?.currentStation || '',
+      currentWorkstation: user?.currentWorkstation || '',
+      currentLocation: user?.currentLocation || '',
       payLevel: user?.payLevel || '',
       gradePay: user?.gradePay || '',
       basicPay: user?.basicPay || '',
       category: user?.category || '',
-      workplaceRemark: user?.workplaceRemark || ''
+      workplaceRemark: user?.workplaceRemark || '',
+      mobile: user?.mobile || '',
+      whatsapp: user?.whatsapp || ''
     });
     setIsEditing(false);
     setProfileStatus(null);
@@ -227,6 +288,34 @@ const SettingsPage = () => {
 
   return (
     <div className="animate-fade-in max-w-3xl mx-auto">
+
+      {/* ── Auto-dismiss success toast ── */}
+      <div
+        style={{ transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        className={`fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none`}
+      >
+        <div
+          style={{ transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+          className={`flex flex-col items-center gap-4 bg-white px-10 py-8 rounded-3xl shadow-2xl border border-emerald-100 relative overflow-hidden ${
+            showToast ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
+          }`}
+        >
+          <div className="h-16 w-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+            <CheckCheck className="h-8 w-8 text-emerald-600" />
+          </div>
+          <div className="text-center">
+            <p className="font-black text-xl text-slate-900 mb-1">Profile Updated!</p>
+            <p className="text-slate-500 text-sm font-medium">Your changes have been saved successfully.</p>
+          </div>
+          {/* Progress bar */}
+          <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 rounded-full"
+            style={{
+              width: showToast ? '0%' : '100%',
+              transition: showToast ? 'width 3s linear' : 'none',
+            }}
+          />
+        </div>
+      </div>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Settings</h1>
@@ -322,30 +411,21 @@ const SettingsPage = () => {
                 <div className="max-w-md">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Working Sector</label>
-                    <div className="relative">
-                      <select 
-                        name="sector" value={profileForm.sector} onChange={handleProfileChange} title={profileForm.sector}
-                        disabled={!isEditing}
-                        className={`w-full pl-4 pr-10 py-3 ${!isEditing ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-not-allowed font-medium' : 'bg-primary-50/30 border-primary-100 text-slate-800 font-black focus:ring-4 focus:ring-primary-500/10'} border rounded-xl text-sm appearance-none whitespace-normal shadow-sm transition-all`}
-                      >
-                        <option value="">Choose your primary sector</option>
-                        {sectors?.map(group => (
-                          <optgroup key={group.group} label={group.group}>
-                            {group.options.map(opt => (
-                              <option 
-                                key={opt.value} 
-                                value={opt.value}
-                                className={!opt.active ? 'text-slate-400 font-normal italic' : ''}
-                                style={!opt.active ? { color: '#94a3b8' } : {}}
-                              >
-                                {opt.label} {!opt.active ? '(Coming Soon)' : ''}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-600 pointer-events-none" />
-                    </div>
+                    <SearchableSelect
+                      id="sector"
+                      value={profileForm.sector}
+                      onChange={(val) => handleProfileSelect('sector', val)}
+                      disabled={!isEditing}
+                      placeholder="Choose your primary sector"
+                      options={sectors?.map(group => ({
+                        group: group.group,
+                        options: group.options.map(opt => ({
+                          value: opt.value,
+                          label: `${opt.label} ${!opt.active ? '(Coming Soon)' : ''}`,
+                          disabled: !opt.active
+                        }))
+                      })) || []}
+                    />
                   </div>
                 </div>
               </div>
@@ -402,20 +482,20 @@ const SettingsPage = () => {
                            <div className="h-1 w-4 bg-primary-600 rounded-full" />
                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Workplace Location</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Zone / Region</label>
-                            <div className="relative">
-                              <select 
-                                name="currentZone" value={profileForm.currentZone} onChange={handleProfileChange} title={profileForm.currentZone}
-                                disabled={!isEditing}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700'} border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Zone</option>
-                                {getZoneList().map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="currentZone"
+                              value={profileForm.currentZone}
+                              onChange={(val) => handleProfileSelect('currentZone', val)}
+                              disabled={!isEditing}
+                              placeholder="Select Zone"
+                              options={[
+                                ...getZoneList().filter(z => z.value?.toLowerCase() !== 'other'),
+                                { value: 'Other', label: 'Other (Not in list)' }
+                              ]}
+                            />
                             {profileForm.currentZone === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Zone Name" value={otherValues.currentZone}
@@ -428,20 +508,23 @@ const SettingsPage = () => {
 
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Division</label>
-                            <div className="relative">
-                              <select 
-                                name="currentDivision" value={profileForm.currentDivision} onChange={handleProfileChange} disabled={!profileForm.currentZone || !isEditing} title={profileForm.currentDivision}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 disabled:opacity-50 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Division</option>
-                                {profileForm.currentZone && regionData?.[profileForm.currentZone] ? 
-                                  Object.keys(regionData[profileForm.currentZone].divisions).map(d => (
-                                    <option key={d} value={d}>{d}</option>
-                                  )) : null
-                                }
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="currentDivision"
+                              value={profileForm.currentDivision}
+                              onChange={(val) => handleProfileSelect('currentDivision', val)}
+                              disabled={!profileForm.currentZone || !isEditing}
+                              placeholder="Select Division"
+                              options={
+                                profileForm.currentZone && regionData?.[profileForm.currentZone]?.divisions 
+                                  ? [
+                                      ...Object.keys(regionData[profileForm.currentZone].divisions)
+                                        .filter(d => d.toLowerCase() !== 'other')
+                                        .map(d => ({ value: d, label: d })),
+                                      { value: 'Other', label: 'Other (Not in list)' }
+                                    ]
+                                  : []
+                              }
+                            />
                             {profileForm.currentDivision === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Division Name" value={otherValues.currentDivision}
@@ -453,26 +536,52 @@ const SettingsPage = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Station / Unit</label>
-                            <div className="relative">
-                              <select 
-                                name="currentStation" value={profileForm.currentStation} onChange={handleProfileChange} disabled={!profileForm.currentDivision || !isEditing} title={profileForm.currentStation}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 disabled:opacity-50 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Station</option>
-                                {profileForm.currentZone && profileForm.currentDivision && regionData?.[profileForm.currentZone]?.divisions[profileForm.currentDivision] ? 
-                                  regionData[profileForm.currentZone].divisions[profileForm.currentDivision].map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                  )) : null
-                                }
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
-                            {profileForm.currentStation === 'Other' && (
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Workstation Type</label>
+                            <SearchableSelect
+                              id="currentWorkstation"
+                              value={profileForm.currentWorkstation}
+                              onChange={(val) => handleProfileSelect('currentWorkstation', val)}
+                              disabled={!profileForm.currentDivision || !isEditing}
+                              placeholder="Select Workstation"
+                              options={[
+                                ...(workstationTypes?.filter(w => w.toLowerCase() !== 'other').map(w => ({ value: w, label: w })) || []),
+                                { value: 'Other', label: 'Other (Not in list)' }
+                              ]}
+                            />
+                            {profileForm.currentWorkstation === 'Other' && (
                               <input 
-                                type="text" placeholder="Enter Station Name" value={otherValues.currentStation}
+                                type="text" placeholder="Enter Workstation Name" value={otherValues.currentWorkstation}
                                 disabled={!isEditing}
-                                onChange={(e) => setOtherValues({...otherValues, currentStation: e.target.value})}
+                                onChange={(e) => setOtherValues({...otherValues, currentWorkstation: e.target.value})}
+                                className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Location / Unit</label>
+                            <SearchableSelect
+                              id="currentLocation"
+                              value={profileForm.currentLocation}
+                              onChange={(val) => handleProfileSelect('currentLocation', val)}
+                              disabled={!profileForm.currentWorkstation || !isEditing}
+                              placeholder="Select Details"
+                              options={
+                                profileForm.currentZone && profileForm.currentDivision && profileForm.currentWorkstation && regionData?.[profileForm.currentZone]?.divisions?.[profileForm.currentDivision]?.[profileForm.currentWorkstation]
+                                  ? [
+                                      ...regionData[profileForm.currentZone].divisions[profileForm.currentDivision][profileForm.currentWorkstation]
+                                        .filter(l => l.toLowerCase() !== 'other')
+                                        .map(l => ({ value: l, label: l })),
+                                      { value: 'Other', label: 'Other (Not in list)' }
+                                    ]
+                                  : []
+                              }
+                            />
+                            {profileForm.currentLocation === 'Other' && (
+                              <input 
+                                type="text" placeholder="Enter Location Name" value={otherValues.currentLocation}
+                                disabled={!isEditing}
+                                onChange={(e) => setOtherValues({...otherValues, currentLocation: e.target.value})}
                                 className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
                               />
                             )}
@@ -502,20 +611,20 @@ const SettingsPage = () => {
                            <div className="h-1 w-4 bg-primary-600 rounded-full" />
                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Job Details</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Department</label>
-                            <div className="relative">
-                              <select 
-                                name="department" value={profileForm.department} onChange={handleProfileChange} title={profileForm.department}
-                                disabled={!isEditing}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Department</option>
-                                {Object.keys(departments || {}).map(d => <option key={d} value={d}>{d}</option>)}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="department"
+                              value={profileForm.department}
+                              onChange={(val) => handleProfileSelect('department', val)}
+                              disabled={!isEditing}
+                              placeholder="Select Department"
+                              options={[
+                                ...Object.keys(departments || {}).filter(d => d.toLowerCase() !== 'other').map(d => ({ value: d, label: d })),
+                                { value: 'Other', label: 'Other (Not in list)' }
+                              ]}
+                            />
                             {profileForm.department === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Department Name" value={otherValues.department}
@@ -528,20 +637,23 @@ const SettingsPage = () => {
 
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub-department</label>
-                            <div className="relative">
-                              <select 
-                                name="subDepartment" value={profileForm.subDepartment} onChange={handleProfileChange} disabled={!profileForm.department || !isEditing} title={profileForm.subDepartment}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 disabled:opacity-50 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Sub-department</option>
-                                {profileForm.department && departments?.[profileForm.department] ? 
-                                  Object.keys(departments[profileForm.department].subDepartments).map(sd => (
-                                    <option key={sd} value={sd}>{sd}</option>
-                                  )) : null
-                                }
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="subDepartment"
+                              value={profileForm.subDepartment}
+                              onChange={(val) => handleProfileSelect('subDepartment', val)}
+                              disabled={!profileForm.department || !isEditing}
+                              placeholder="Select Sub-department"
+                              options={
+                                profileForm.department && departments?.[profileForm.department]
+                                  ? [
+                                      ...Object.keys(departments[profileForm.department].subDepartments)
+                                        .filter(sd => sd.toLowerCase() !== 'other')
+                                        .map(sd => ({ value: sd, label: sd })),
+                                      { value: 'Other', label: 'Other (Not in list)' }
+                                    ]
+                                  : []
+                              }
+                            />
                             {profileForm.subDepartment === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Sub-department Name" value={otherValues.subDepartment}
@@ -554,20 +666,23 @@ const SettingsPage = () => {
 
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Designation</label>
-                            <div className="relative">
-                              <select 
-                                name="designation" value={profileForm.designation} onChange={handleProfileChange} disabled={!profileForm.subDepartment || !isEditing} title={profileForm.designation}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 disabled:opacity-50 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Designation</option>
-                                {(profileForm.department && profileForm.subDepartment && departments?.[profileForm.department]?.subDepartments[profileForm.subDepartment]) ? 
-                                  departments[profileForm.department].subDepartments[profileForm.subDepartment].map(design => (
-                                    <option key={design} value={design}>{design}</option>
-                                  )) : null
-                                }
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="designation"
+                              value={profileForm.designation}
+                              onChange={(val) => handleProfileSelect('designation', val)}
+                              disabled={!profileForm.subDepartment || !isEditing}
+                              placeholder="Select Designation"
+                              options={
+                                (profileForm.department && profileForm.subDepartment && departments?.[profileForm.department]?.subDepartments[profileForm.subDepartment])
+                                  ? [
+                                      ...departments[profileForm.department].subDepartments[profileForm.subDepartment]
+                                        .filter(design => design.toLowerCase() !== 'other')
+                                        .map(design => ({ value: design, label: design })),
+                                      { value: 'Other', label: 'Other (Not in list)' }
+                                    ]
+                                  : []
+                              }
+                            />
                             {profileForm.designation === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Designation" value={otherValues.designation}
@@ -576,6 +691,29 @@ const SettingsPage = () => {
                                 className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
                               />
                             )}
+                          </div>
+
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mode of Selection</label>
+                             <SearchableSelect
+                               id="modeOfSelection"
+                               value={profileForm.modeOfSelection}
+                               onChange={(val) => handleProfileSelect('modeOfSelection', val)}
+                               disabled={!isEditing}
+                               placeholder="Select Mode"
+                               options={[
+                                 ...(modeOfSelection?.filter(m => m.value?.toLowerCase() !== 'other' && m.label?.toLowerCase() !== 'other') || []),
+                                 { value: 'Other', label: 'Other (Not in list)' }
+                               ]}
+                             />
+                             {profileForm.modeOfSelection === 'Other' && (
+                               <input 
+                                 type="text" placeholder="Enter Mode of Selection" value={otherValues.modeOfSelection}
+                                 disabled={!isEditing}
+                                 onChange={(e) => setOtherValues({...otherValues, modeOfSelection: e.target.value})}
+                                 className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
+                               />
+                             )}
                           </div>
                         </div>
                       </div>
@@ -586,22 +724,17 @@ const SettingsPage = () => {
                            <div className="h-1 w-4 bg-primary-600 rounded-full" />
                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Pay & Personal</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pay Level (7th CPC)</label>
-                            <div className="relative">
-                              <select 
-                                name="payLevel" value={profileForm.payLevel} onChange={handleProfileChange}
-                                disabled={!isEditing}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Level</option>
-                                {payLevels?.map(level => (
-                                  <option key={level} value={level}>{level}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="payLevel"
+                              value={profileForm.payLevel}
+                              onChange={(val) => handleProfileSelect('payLevel', val)}
+                              disabled={!isEditing}
+                              placeholder="Select Level"
+                              options={payLevels?.map(level => ({ value: level, label: level })) || []}
+                            />
                           </div>
 
                           <div className="space-y-2">
@@ -627,17 +760,17 @@ const SettingsPage = () => {
 
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                            <div className="relative">
-                              <select 
-                                name="category" value={profileForm.category} onChange={handleProfileChange} title={profileForm.category}
-                                disabled={!isEditing}
-                                className={`w-full pl-4 pr-10 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 appearance-none whitespace-normal`}
-                              >
-                                <option value="">Select Category</option>
-                                {categories?.map(c => <option key={c} value={c}>{c}</option>)}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                            </div>
+                            <SearchableSelect
+                              id="category"
+                              value={profileForm.category}
+                              onChange={(val) => handleProfileSelect('category', val)}
+                              disabled={!isEditing}
+                              placeholder="Select Category"
+                              options={[
+                                ...(categories?.map(c => ({ value: c, label: c })) || []),
+                                { value: 'Other', label: 'Other (Not in list)' }
+                              ]}
+                            />
                             {profileForm.category === 'Other' && (
                               <input 
                                 type="text" placeholder="Enter Category" value={otherValues.category}
@@ -646,6 +779,34 @@ const SettingsPage = () => {
                                 className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
                               />
                             )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Section 4: Contact Information */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+                           <div className="h-1 w-4 bg-emerald-600 rounded-full" />
+                           <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Contact Options</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number (Primary)</label>
+                            <input 
+                              type="text" name="mobile" value={profileForm.mobile} onChange={handleProfileChange}
+                              disabled={!isEditing}
+                              placeholder="10-digit mobile number"
+                              className={`w-full px-4 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp Number</label>
+                            <input 
+                              type="text" name="whatsapp" value={profileForm.whatsapp} onChange={handleProfileChange}
+                              disabled={!isEditing}
+                              placeholder="10-digit whatsapp number"
+                              className={`w-full px-4 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20`}
+                            />
                           </div>
                         </div>
                       </div>

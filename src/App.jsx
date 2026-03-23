@@ -17,6 +17,7 @@ import ProfilePage from './pages/ProfilePage';
 import SearchTransfersPage from './pages/SearchTransfersPage';
 import LandingPage from './pages/LandingPage';
 import TermsPage from './pages/TermsPage';
+import TransferDetailsPage from './pages/TransferDetailsPage';
 
 import { AuthProvider } from './context/AuthProvider';
 import { MasterDataProvider } from './context/MasterDataContext';
@@ -46,6 +47,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/transfers/:id" element={<TransferDetailsPage />} />
 
           {/* Protected Routes inside DashboardLayout */}
           <Route

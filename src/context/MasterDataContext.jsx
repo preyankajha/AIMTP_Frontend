@@ -10,7 +10,8 @@ export const MasterDataProvider = ({ children }) => {
     sectors: [],
     categories: [],
     payLevels: [],
-    modeOfSelection: []
+    modeOfSelection: [],
+    workstationTypes: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +26,8 @@ export const MasterDataProvider = ({ children }) => {
         sectors: [],
         categories: [],
         payLevels: [],
-        modeOfSelection: []
+        modeOfSelection: [],
+        workstationTypes: []
       });
       setError(null);
     } catch (err) {

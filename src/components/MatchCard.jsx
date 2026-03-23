@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, MapPin, ArrowRight, Eye, CheckCircle2 } from 'lucide-react';
+import { Phone, MapPin, ArrowRight, Eye, CheckCircle2, MessageCircle, Mail } from 'lucide-react';
 import { revealContact } from '../services/matchService';
 
 const MatchCard = ({ match, onContactRevealed }) => {
@@ -11,7 +11,7 @@ const MatchCard = ({ match, onContactRevealed }) => {
     setError(null);
     try {
       const result = await revealContact(match.matchId);
-      if (onContactRevealed) onContactRevealed(match.matchId, result.partnerMobile);
+      if (onContactRevealed) onContactRevealed(match.matchId, result);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reveal contact');
     } finally {
@@ -97,14 +97,38 @@ const MatchCard = ({ match, onContactRevealed }) => {
       <div className="px-5 pb-5">
         {error && <p className="text-[10px] text-red-500 mb-2 text-center font-bold">{error}</p>}
         
-        {match.contactRevealed && match.partner.mobile ? (
-          <a 
-            href={`tel:${match.partner.mobile}`}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 active:scale-95 transition-all text-sm"
-          >
-            <Phone className="h-4 w-4" />
-            {match.partner.mobile}
-          </a>
+        {match.contactRevealed ? (
+          <div className="space-y-3">
+             <div className="flex gap-2">
+                <a 
+                  href={`tel:${match.partner.mobile}`}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-900 text-white font-black rounded-xl hover:bg-black active:scale-95 transition-all text-xs"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  Call
+                </a>
+                {match.partner.whatsapp && (
+                  <a 
+                    href={`https://wa.me/${match.partner.whatsapp.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-black rounded-xl hover:bg-[#128C7E] active:scale-95 transition-all text-xs"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </a>
+                )}
+             </div>
+             {match.partner.email && (
+                <a 
+                  href={`mailto:${match.partner.email}`}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 active:scale-95 transition-all text-xs"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  {match.partner.email}
+                </a>
+             )}
+          </div>
         ) : (
           <button
             onClick={handleReveal}

@@ -43,15 +43,39 @@ const DashboardPage = () => {
         ]);
         const filtered = publicData.transfers.filter(t => t.userId?._id !== user?._id);
         
-        // Profile-based suggestions
+        // Profile and Desired Location based suggestions
         let suggestions = filtered;
-        if (user?.department || user?.currentZone || user?.designation) {
-          const profileMatches = filtered.filter(t => 
+        
+        // 1. Get all desired locations from user's active transfers
+        const myActiveTransfers = transferData.transfers?.filter(t => t.status === 'active') || [];
+        const myDesiredLocs = myActiveTransfers.flatMap(t => t.desiredLocations || []);
+
+        if (myDesiredLocs.length > 0) {
+          // 2. Filter public transfers whose "source" (current posting) matches any of our "desired" locations
+          const relevantSuggestions = filtered.filter(t => 
+            myDesiredLocs.some(dl => 
+              (dl.zone && t.currentZone === dl.zone) &&
+              (!dl.division || t.currentDivision === dl.division) &&
+              (!dl.station || t.currentStation === dl.station)
+            )
+          );
+          
+          if (relevantSuggestions.length > 0) {
+            suggestions = relevantSuggestions;
+          } else {
+            // Fallback to department/designation matches if no direct location matches found
+            suggestions = filtered.filter(t => 
+              (user?.department && t.department === user.department) ||
+              (user?.designation && t.designation === user.designation)
+            );
+          }
+        } else if (user?.department || user?.currentZone || user?.designation) {
+          // Fallback for users without active transfer requests
+          suggestions = filtered.filter(t => 
             (user.department && t.department === user.department) ||
             (user.currentZone && t.currentZone === user.currentZone) ||
             (user.designation && t.designation === user.designation)
           );
-          if (profileMatches.length > 0) suggestions = profileMatches;
         }
 
         setMatches(matchData.matches);

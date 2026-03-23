@@ -15,8 +15,8 @@ export const searchTransfers = async (params) => {
   return response.data;
 };
 
-export const deleteTransfer = async (id) => {
-  const response = await api.delete(`/transfers/${id}`);
+export const updateTransferStatus = async (id, statusData) => {
+  const response = await api.put(`/transfers/${id}/status`, statusData);
   return response.data;
 };
 
@@ -32,5 +32,10 @@ export const updateTransfer = async (id, transferData) => {
 
 export const getPublicTransfers = async () => {
   const response = await api.get('/transfers/public');
+  return response.data;
+};
+
+export const getTransferDetails = async (id) => {
+  const response = await api.get(`/transfers/${id}/details`);
   return response.data;
 };

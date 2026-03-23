@@ -3,46 +3,49 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { createTransfer, getTransferById, updateTransfer } from '../services/transferService';
 import { useAuth } from '../hooks/useAuth';
 import { useMasterData } from '../context/MasterDataContext';
-import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings } from 'lucide-react';
+import SearchableSelect from '../components/SearchableSelect';
+import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings, Phone } from 'lucide-react';
 
 
-const SelectInput = ({ label, name, value, options, placeholder, icon: Icon, onChange, otherValue, onOtherChange }) => {
+/**
+ * SelectInput — wraps SearchableSelect and handles the "Other" custom-text fallback.
+ * Passes options as {value,label} and appends "Other" when needed.
+ */
+const SelectInput = ({ label, name, value, options, placeholder, onChange, otherValue, onOtherChange }) => {
   const isOtherSelected = value === 'Other' || value === 'OTHER';
-  
+
+  // Normalise to {value, label}
+  const normOpts = options.map(o =>
+    typeof o === 'string' ? { value: o, label: o } : o
+  );
+
+  // Filter out any existing "Other" options to avoid case-insensitive duplicates, 
+  // then append a single standard "Other" at the bottom (except for modeOfSelection).
+  const filteredOpts = normOpts.filter(o => o.value?.toLowerCase() !== 'other');
+  const finalOpts = (name !== 'modeOfSelection')
+    ? [...filteredOpts, { value: 'Other', label: 'Other (Not in list)' }]
+    : normOpts;
+
+  const handleChange = (val) => {
+    // Simulate a synthetic event so existing handlers (handleChange / handleOtherChange) work
+    onChange({ target: { name, value: val } });
+  };
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-bold text-slate-700">{label}</label>
-      <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />}
-        <select
-          name={name}
-          value={value}
-          onChange={onChange}
-          required
-          title={value}
-          className={`block w-full ${Icon ? 'pl-10' : 'px-4'} pr-10 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm appearance-none transition-all`}
-        >
-          <option value="">{placeholder || `Select ${label}`}</option>
-          {options.map((opt, idx) => (
-            <option key={idx} value={typeof opt === 'string' ? opt : opt.value}>
-              {typeof opt === 'string' ? opt : opt.label}
-            </option>
-          ))}
-          {!options.some(opt => (typeof opt === 'string' ? opt : opt.value)?.toLowerCase() === 'other') && name !== 'modeOfSelection' && (
-             <option value="Other">Other</option>
-          )}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-          <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-        </div>
-      </div>
-      
+      <SearchableSelect
+        value={value}
+        onChange={handleChange}
+        options={finalOpts}
+        placeholder={placeholder || `Select ${label}`}
+      />
       {isOtherSelected && (
         <div className="animate-slide-down">
           <input
             type="text"
             name={name}
-            value={otherValue}
+            value={otherValue || ''}
             onChange={onOtherChange}
             required
             placeholder={`Enter specific ${label.toLowerCase()}`}
@@ -68,15 +71,22 @@ const CreateTransferPage = () => {
     modeOfSelection: '',
     currentZone: '',
     currentDivision: '',
+    currentWorkstation: '',
+    currentLocation: '',
     currentStation: '',
     desiredLocations: [
-      { zone: '', division: '', station: '', priority: 1 }
+      { zone: '', division: '', workstation: '', location: '', priority: 1 }
     ],
     payLevel: '',
     gradePay: '',
     basicPay: '',
     category: '',
     workplaceRemark: '',
+    contactOptions: {
+      email: user?.email || '',
+      phone: user?.mobile || '',
+      whatsapp: user?.whatsapp || ''
+    }
   });
 
   // States for "Other" custom inputs
@@ -121,27 +131,45 @@ const CreateTransferPage = () => {
         department: user.department || prev.department,
         subDepartment: user.subDepartment || prev.subDepartment,
         designation: user.designation || prev.designation,
+        modeOfSelection: user.modeOfSelection || prev.modeOfSelection,
         currentZone: user.currentZone || prev.currentZone,
         currentDivision: user.currentDivision || prev.currentDivision,
+        currentWorkstation: user.currentWorkstation || prev.currentWorkstation,
+        currentLocation: user.currentLocation || prev.currentLocation,
         currentStation: user.currentStation || prev.currentStation,
         category: user.category || prev.category,
         payLevel: user.payLevel || prev.payLevel,
         gradePay: user.gradePay || prev.gradePay,
         basicPay: user.basicPay || prev.basicPay,
-        category: user.category || prev.category,
         workplaceRemark: user.workplaceRemark || prev.workplaceRemark,
+        contactOptions: {
+          email: user.email || prev.contactOptions.email,
+          phone: user.mobile || prev.contactOptions.phone,
+          whatsapp: user.whatsapp || prev.contactOptions.whatsapp,
+        }
       }));
     }
   }, [user, isEditMode, masterLoading]);
 
   // Derived options for cascading dropdowns
-  const deptList = Object.keys(departments || {});
-  const subDeptList = formData.department && departments?.[formData.department] 
-    ? Object.keys(departments[formData.department].subDepartments) 
-    : [];
-  const designationList = formData.department && formData.subDepartment && departments?.[formData.department]?.subDepartments[formData.subDepartment]
-    ? departments[formData.department].subDepartments[formData.subDepartment]
-    : [];
+  const deptList = [
+    ...Object.keys(departments || {}).filter(d => d.toLowerCase() !== 'other').map(d => ({ value: d, label: d })),
+    { value: 'Other', label: 'Other (Not in list)' }
+  ];
+  
+  const subDeptList = (formData.department && departments?.[formData.department]) 
+    ? [
+        ...Object.keys(departments[formData.department].subDepartments).filter(sd => sd.toLowerCase() !== 'other').map(sd => ({ value: sd, label: sd })),
+        { value: 'Other', label: 'Other (Not in list)' }
+      ]
+    : formData.department === 'Other' ? [{ value: 'Other', label: 'Other (Not in list)' }] : [];
+
+  const designationList = (formData.department && formData.subDepartment && departments?.[formData.department]?.subDepartments[formData.subDepartment])
+    ? [
+        ...departments[formData.department].subDepartments[formData.subDepartment].filter(design => design.toLowerCase() !== 'other').map(design => ({ value: design, label: design })),
+        { value: 'Other', label: 'Other (Not in list)' }
+      ]
+    : formData.subDepartment === 'Other' ? [{ value: 'Other', label: 'Other (Not in list)' }] : [];
 
   // Zone list as objects {label, value} with CODE shown
   const zoneList = getZoneList();
@@ -152,23 +180,55 @@ const CreateTransferPage = () => {
     ? regionData[formData.currentZone].divisions[formData.currentDivision]
     : [];
 
-  const getLocOptions = (zone, division) => {
-    const divs = zone && regionData[zone] ? Object.keys(regionData[zone].divisions) : [];
-    const stations = zone && division && regionData[zone]?.divisions[division] ? regionData[zone].divisions[division] : [];
-    return { divs, stations };
+  const { workstationTypes } = useMasterData();
+
+  const getLocOptions = (zone, division, workstationType) => {
+    let divs = (zone && regionData?.[zone]) ? Object.keys(regionData[zone].divisions) : [];
+    // Ensure "Other" is available even if the list is empty (so "Other" zone can have an "Other" division)
+    divs = divs.filter(d => d.toLowerCase() !== 'other')
+      .map(d => ({ value: d, label: d }));
+    divs.push({ value: 'Other', label: 'Other (Not in list)' });
+    
+    let workstations = (workstationTypes || [])
+      .filter(w => w.toLowerCase() !== 'other')
+      .map(w => ({ value: w, label: w }));
+    workstations.push({ value: 'Other', label: 'Other (Not in list)' });
+    
+    let locations = (zone && division && workstationType && regionData?.[zone]?.divisions?.[division]?.[workstationType])
+      ? regionData[zone].divisions[division][workstationType]
+      : [];
+    locations = locations.filter(l => l.toLowerCase() !== 'other')
+      .map(l => ({ value: l, label: l }));
+    locations.push({ value: 'Other', label: 'Other (Not in list)' });
+    
+    return { divs, workstations, locations };
   };
 
   const handleLocationChange = (index, field, value) => {
     const newDesired = [...formData.desiredLocations];
     newDesired[index][field] = value;
     
-    // Reset child dropdowns
+    // Clear and reset child dropdowns when parent changes
     if (field === 'zone') {
       newDesired[index].division = '';
-      newDesired[index].station = '';
+      newDesired[index].workstation = '';
+      newDesired[index].location = '';
     }
     if (field === 'division') {
-      newDesired[index].station = '';
+      newDesired[index].workstation = '';
+      newDesired[index].location = '';
+    }
+    if (field === 'workstation') {
+      newDesired[index].location = '';
+    }
+    
+    // If selecting "Other", clear the corresponding custom input field
+    if (value === 'Other' || (typeof value === 'string' && value.toLowerCase() === 'other')) {
+      const newOther = [...otherInputs.desiredLocations];
+      const fieldInOther = field === 'location' ? 'station' : field;
+      if (!newOther[index]) newOther[index] = { zone: '', division: '', workstation: '', station: '' };
+      newOther[index][fieldInOther] = '';
+      setOtherInputs({ ...otherInputs, desiredLocations: newOther });
     }
     
     setFormData({ ...formData, desiredLocations: newDesired });
@@ -184,11 +244,11 @@ const CreateTransferPage = () => {
   const addLocation = () => {
     setFormData({
       ...formData,
-      desiredLocations: [...formData.desiredLocations, { zone: '', division: '', station: '', priority: formData.desiredLocations.length + 1 }]
+      desiredLocations: [...formData.desiredLocations, { zone: '', division: '', workstation: '', location: '', priority: formData.desiredLocations.length + 1 }]
     });
     setOtherInputs({
       ...otherInputs,
-      desiredLocations: [...otherInputs.desiredLocations, { zone: '', division: '', station: '' }]
+      desiredLocations: [...otherInputs.desiredLocations, { zone: '', division: '', workstation: '', location: '' }]
     });
   };
 
@@ -201,16 +261,19 @@ const CreateTransferPage = () => {
   };
 
   useEffect(() => {
-    if (isEditMode && regionData) {
+    if (isEditMode && !masterLoading && Object.keys(regionData).length > 0 && Object.keys(departments).length > 0) {
       const fetchTransfer = async () => {
         try {
+          console.log('Fetching transfer ID:', id);
           const data = await getTransferById(id);
+          console.log('Data received:', data);
+          if (!data) throw new Error('No data returned from server');
           
           // Reconstruct form state and handle "Other" logic
           const newFormData = { ...formData };
           const newOtherInputs = { ...otherInputs };
           
-          const deptOptions = Object.keys(departments);
+          const deptOptions = Object.keys(departments || {});
           if (deptOptions.includes(data.department)) {
             newFormData.department = data.department;
           } else {
@@ -219,8 +282,8 @@ const CreateTransferPage = () => {
           }
 
           // Trigger logic for sub-department
-          const subDepts = newFormData.department !== 'Other' 
-            ? Object.keys(departments[newFormData.department].subDepartments)
+          const subDepts = (newFormData.department !== 'Other' && departments[newFormData.department])
+            ? Object.keys(departments[newFormData.department].subDepartments || {})
             : [];
           if (subDepts.includes(data.subDepartment)) {
             newFormData.subDepartment = data.subDepartment;
@@ -230,7 +293,7 @@ const CreateTransferPage = () => {
           }
 
           // Trigger logic for designation
-          const desigs = (newFormData.department !== 'Other' && newFormData.subDepartment !== 'Other')
+          const desigs = (newFormData.department !== 'Other' && newFormData.subDepartment !== 'Other' && departments[newFormData.department]?.subDepartments?.[newFormData.subDepartment])
             ? departments[newFormData.department].subDepartments[newFormData.subDepartment]
             : [];
           if (desigs.includes(data.designation)) {
@@ -246,11 +309,14 @@ const CreateTransferPage = () => {
           // Current
           if (zoneOptions.includes(data.currentZone)) {
             newFormData.currentZone = data.currentZone;
-            const divs = Object.keys(regionData[data.currentZone].divisions);
+            const divs = Object.keys(regionData[data.currentZone]?.divisions || {});
             if (divs.includes(data.currentDivision)) {
               newFormData.currentDivision = data.currentDivision;
-              const stations = regionData[data.currentZone].divisions[data.currentDivision];
-              if (stations.includes(data.currentStation)) {
+              const workstationMap = regionData[data.currentZone]?.divisions?.[data.currentDivision] || {};
+              // Flatten all stations from all workstation types to check if existing station exists
+              const allStations = Object.values(workstationMap).flat();
+              
+              if (allStations.includes(data.currentStation)) {
                 newFormData.currentStation = data.currentStation;
               } else {
                 newFormData.currentStation = 'Other';
@@ -275,34 +341,48 @@ const CreateTransferPage = () => {
           if (data.desiredLocations && data.desiredLocations.length > 0) {
             const locs = data.desiredLocations.map(loc => {
               const zoneOptions = Object.keys(regionData);
-              const result = { zone: '', division: '', station: '', priority: loc.priority || 1 };
-              const otherRes = { zone: '', division: '', station: '' };
+              const result = { zone: '', division: '', workstation: '', location: '', priority: loc.priority || 1 };
+              const otherRes = { zone: '', division: '', workstation: '', station: '' };
               
               if (zoneOptions.includes(loc.zone)) {
                 result.zone = loc.zone;
-                const divs = Object.keys(regionData[loc.zone].divisions);
+                const divs = Object.keys(regionData[loc.zone]?.divisions || {});
                 if (divs.includes(loc.division)) {
                   result.division = loc.division;
-                  const stations = regionData[loc.zone].divisions[loc.division];
-                  if (stations.includes(loc.station)) {
-                    result.station = loc.station;
+                  const workstationMap = regionData[loc.zone]?.divisions?.[loc.division] || {};
+                  
+                  if (workstationMap[loc.workstation]) {
+                    result.workstation = loc.workstation;
+                    const stations = workstationMap[loc.workstation] || [];
+                    if (stations.includes(loc.location)) {
+                      result.location = loc.location;
+                    } else {
+                      result.location = 'Other';
+                      otherRes.station = loc.location;
+                    }
                   } else {
-                    result.station = 'Other';
-                    otherRes.station = loc.station;
+                    result.workstation = 'Other';
+                    otherRes.workstation = loc.workstation;
+                    result.location = 'Other';
+                    otherRes.station = loc.location;
                   }
                 } else {
                   result.division = 'Other';
                   otherRes.division = loc.division;
-                  result.station = 'Other';
-                  otherRes.station = loc.station;
+                  result.workstation = 'Other';
+                  otherRes.workstation = loc.workstation;
+                  result.location = 'Other';
+                  otherRes.station = loc.location;
                 }
               } else {
                 result.zone = 'Other';
                 otherRes.zone = loc.zone;
                 result.division = 'Other';
                 otherRes.division = loc.division;
-                result.station = 'Other';
-                otherRes.station = loc.station;
+                result.workstation = 'Other';
+                otherRes.workstation = loc.workstation;
+                result.location = 'Other';
+                otherRes.station = loc.location;
               }
               return { result, otherRes };
             });
@@ -316,21 +396,36 @@ const CreateTransferPage = () => {
           newFormData.category = data.category || '';
           newFormData.workplaceRemark = data.workplaceRemark || '';
 
+          if (data.contactOptions) {
+            newFormData.contactOptions = {
+              email: data.contactOptions.email || '',
+              phone: data.contactOptions.phone || '',
+              whatsapp: data.contactOptions.whatsapp || ''
+            };
+          }
+
           setFormData(newFormData);
           setOtherInputs(newOtherInputs);
           setFetching(false);
         } catch (err) {
-          setError('Failed to load transfer request details.');
+          console.error('Detailed fetch error:', err);
+          const errMsg = err.response?.data?.message || err.message || 'Unknown processing error';
+          setError(`Diagnostic Error: ${errMsg}`);
           setFetching(false);
         }
       };
       fetchTransfer();
     }
-  }, [id, isEditMode, regionData]);
+  }, [id, isEditMode, masterLoading, regionData, departments]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear custom "Other" input if "Other" is selected in the main dropdown
+    if (value === 'Other' || (typeof value === 'string' && value.toLowerCase() === 'other')) {
+      setOtherInputs(prev => ({ ...prev, [name]: '' }));
+    }
     
     // Auto-fill from profile if user selects their working sector
     if (name === 'sector' && value === user?.sector && isProfileComplete) {
@@ -361,6 +456,17 @@ const CreateTransferPage = () => {
     
     if (name === 'currentZone') setFormData(prev => ({ ...prev, currentDivision: '', currentStation: '' }));
     if (name === 'currentDivision') setFormData(prev => ({ ...prev, currentStation: '' }));
+
+    if (name.startsWith('contact_')) {
+      const field = name.replace('contact_', '');
+      setFormData(prev => ({
+        ...prev,
+        contactOptions: {
+          ...prev.contactOptions,
+          [field]: value
+        }
+      }));
+    }
   };
 
   const handleOtherChange = (e) => {
@@ -389,13 +495,20 @@ const CreateTransferPage = () => {
       }
     });
 
-    // Desired locations
+    // Desired locations — ensure 'station' field is populated for backend validation
     finalData.desiredLocations = finalData.desiredLocations.map((loc, idx) => {
       const processed = { ...loc };
       const others = otherInputs.desiredLocations[idx] || {};
+      
       if (processed.zone === 'Other') processed.zone = others.zone;
       if (processed.division === 'Other') processed.division = others.division;
-      if (processed.station === 'Other') processed.station = others.station;
+      if (processed.workstation === 'Other') processed.workstation = others.workstation;
+      
+      // Map the UI's "location" field to the backend's "station" field
+      const finalStationValue = processed.location === 'Other' ? others.station : processed.location;
+      processed.location = finalStationValue;
+      processed.station = finalStationValue;
+      
       return processed;
     });
 
@@ -486,10 +599,10 @@ const CreateTransferPage = () => {
     <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in pb-32">
       {/* Terms Modal */}
       {showTermsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 animate-scale-up">
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-hidden">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-scale-up max-h-[90vh] flex flex-col">
+            <div className="p-8 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b border-slate-50">
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">{termsContent[language].title}</h3>
                 <button 
                   onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
@@ -499,25 +612,25 @@ const CreateTransferPage = () => {
                 </button>
               </div>
               
-              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8 max-h-[40vh] overflow-y-auto font-medium">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8 font-medium italic">
                 <p className="text-slate-600 text-sm leading-relaxed">
                   {termsContent[language].content}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 sticky bottom-0 bg-white pt-4">
                 <button
                   onClick={() => {
                     setAcceptedDeclaration(true);
                     setShowTermsModal(false);
                   }}
-                  className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-2xl shadow-lg shadow-primary-600/20 transition-all active:scale-[0.98]"
+                  className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-2xl shadow-xl shadow-primary-600/20 transition-all active:scale-[0.98]"
                 >
                   {termsContent[language].accept}
                 </button>
                 <button
                   onClick={() => setShowTermsModal(false)}
-                  className="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
+                  className="w-full py-2 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
                 >
                   Close
                 </button>
@@ -562,32 +675,20 @@ const CreateTransferPage = () => {
             
             <div className="max-w-md">
               <label className="block text-sm font-bold text-slate-700 mb-2">Select Sector</label>
-              <div className="relative">
-                <select
-                  name="sector"
-                  value={formData.sector}
-                  onChange={handleChange}
-                  required
-                  className="block w-full px-4 pr-10 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm appearance-none transition-all"
-                >
-                  {sectors.map(group => (
-                    <optgroup key={group.group} label={group.group}>
-                      {group.options.map(opt => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          style={opt.active ? {} : { fontStyle: 'italic', color: '#94a3b8' }}
-                        >
-                          {opt.active ? opt.label : `${opt.label} — Coming Soon`}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                  <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-                </div>
-              </div>
+              <SearchableSelect
+                id="sector"
+                value={formData.sector}
+                onChange={(val) => handleChange({ target: { name: 'sector', value: val } })}
+                placeholder="Select Sector"
+                options={sectors?.map(group => ({
+                  group: group.group,
+                  options: group.options.map(opt => ({
+                    value: opt.value,
+                    label: `${opt.label} ${!opt.active ? '(Coming Soon)' : ''}`,
+                    disabled: !opt.active
+                  }))
+                })) || []}
+              />
             </div>
           </div>
 
@@ -694,20 +795,6 @@ const CreateTransferPage = () => {
                   />
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">Working Condition Remarks <span className="text-red-500">*</span></label>
-                  <textarea 
-                    name="workplaceRemark" 
-                    value={formData.workplaceRemark} 
-                    onChange={handleChange}
-                    required
-                    maxLength={300}
-                    placeholder="Briefly describe the working conditions, duty type, or any other relevant details about your current posting..."
-                    className="block w-full px-4 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm resize-none h-24"
-                  />
-                  <p className="text-[10px] text-slate-400 font-bold text-right">{formData.workplaceRemark?.length || 0}/300 characters</p>
-                </div>
-
                 {/* Identification / Current Posting Block */}
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
                    <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex items-center gap-5">
@@ -733,6 +820,73 @@ const CreateTransferPage = () => {
                    </div>
                 </div>
               </div>
+              
+              {/* Contact Information Section moved here */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="bg-emerald-100 p-2 rounded-lg">
+                    <Phone className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Contact Information</h2>
+                    <p className="text-xs text-slate-500 font-medium">How should potential matches reach out to you?</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-700">Display Email</label>
+                    <input
+                      type="email"
+                      name="contact_email"
+                      value={formData.contactOptions.email}
+                      onChange={handleChange}
+                      placeholder="Email address"
+                      className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-700">Display Phone</label>
+                    <input
+                      type="text"
+                      name="contact_phone"
+                      value={formData.contactOptions.phone}
+                      onChange={handleChange}
+                      placeholder="Phone number"
+                      className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-700">Display WhatsApp</label>
+                    <input
+                      type="text"
+                      name="contact_whatsapp"
+                      value={formData.contactOptions.whatsapp}
+                      onChange={handleChange}
+                      placeholder="WhatsApp number"
+                      className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm font-medium"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium italic">
+                  Note: These contact details will ONLY be visible to potential partners once a mutual match is found or you manually reveal it.
+                </p>
+              </div>
+
+              {/* Working Condition Remarks moved here */}
+              <div className="space-y-2 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                <label className="block text-sm font-bold text-slate-700">Working Condition Remarks <span className="text-red-500">*</span></label>
+                <textarea 
+                  name="workplaceRemark" 
+                  value={formData.workplaceRemark} 
+                  onChange={handleChange}
+                  required
+                  maxLength={300}
+                  placeholder="Briefly describe the working conditions, duty type, or any other relevant details about your current posting..."
+                  className="block w-full px-4 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm resize-none h-24"
+                />
+                <p className="text-[10px] text-slate-400 font-bold text-right">{formData.workplaceRemark?.length || 0}/300 characters</p>
+              </div>
 
               {/* Section 2: Location Choices */}
               <div className="space-y-8">
@@ -746,63 +900,121 @@ const CreateTransferPage = () => {
                       <p className="text-xs text-slate-500 font-medium">Add multiple choices and set priority</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={addLocation}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add More Choice
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-8">
                   {formData.desiredLocations.map((loc, index) => {
-                    const { divs, stations } = getLocOptions(loc.zone, loc.division);
+                    const { divs, workstations, locations } = getLocOptions(loc.zone, loc.division, loc.workstation);
                     return (
                       <div key={index} className="relative bg-slate-50/50 p-6 rounded-3xl border border-slate-200 group animate-slide-in">
                         <div className="absolute -left-3 top-6 h-8 w-8 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm z-10">
                           <span className="text-xs font-black text-primary-600">{index + 1}</span>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                          <SelectInput 
-                            label="Region/Zone" 
-                            name="zone" 
-                            value={loc.zone} 
-                            options={zoneList} 
-                            onChange={(e) => handleLocationChange(index, 'zone', e.target.value)}
-                            otherValue={otherInputs.desiredLocations[index]?.zone}
-                            onOtherChange={(e) => handleOtherLocationChange(index, 'zone', e.target.value)}
-                          />
-                          <SelectInput 
-                            label="Division" 
-                            name="division" 
-                            value={loc.division} 
-                            options={divs} 
-                            onChange={(e) => handleLocationChange(index, 'division', e.target.value)}
-                            otherValue={otherInputs.desiredLocations[index]?.division}
-                            onOtherChange={(e) => handleOtherLocationChange(index, 'division', e.target.value)}
-                          />
-                          <SelectInput 
-                            label="Station Code" 
-                            name="station" 
-                            value={loc.station} 
-                            options={stations} 
-                            onChange={(e) => handleLocationChange(index, 'station', e.target.value)}
-                            otherValue={otherInputs.desiredLocations[index]?.station}
-                            onOtherChange={(e) => handleOtherLocationChange(index, 'station', e.target.value)}
-                          />
+                          <div className="space-y-4 md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                              <label className="block text-sm font-bold text-slate-700">Region/Zone</label>
+                              <SearchableSelect
+                                value={loc.zone}
+                                onChange={v => handleLocationChange(index, 'zone', v)}
+                                options={[
+                                  ...zoneList.filter(z => z.value?.toLowerCase() !== 'other'), 
+                                  { value: 'Other', label: 'Other (Not in list)' }
+                                ]}
+                                placeholder="Select Zone"
+                              />
+                              {(loc.zone === 'Other' || (loc.zone && loc.zone.toLowerCase() === 'other')) && (
+                                <input
+                                  type="text"
+                                  value={otherInputs.desiredLocations[index]?.zone || ''}
+                                  onChange={(e) => handleOtherLocationChange(index, 'zone', e.target.value)}
+                                  placeholder="Enter Zone Name"
+                                  className="mt-2 block w-full px-4 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm"
+                                  required
+                                />
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-sm font-bold text-slate-700">Division</label>
+                              <SearchableSelect
+                                value={loc.division}
+                                onChange={v => handleLocationChange(index, 'division', v)}
+                                options={divs}
+                                placeholder="Select Division"
+                                disabled={!loc.zone}
+                              />
+                              {(loc.division === 'Other' || (loc.division && loc.division.toLowerCase() === 'other')) && (
+                                <input
+                                  type="text"
+                                  value={otherInputs.desiredLocations[index]?.division || ''}
+                                  onChange={(e) => handleOtherLocationChange(index, 'division', e.target.value)}
+                                  placeholder="Enter Division Name"
+                                  className="mt-2 block w-full px-4 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm"
+                                  required
+                                />
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-sm font-bold text-slate-700">Workstation Type</label>
+                              <SearchableSelect
+                                value={loc.workstation}
+                                onChange={v => handleLocationChange(index, 'workstation', v)}
+                                options={workstations || []}
+                                placeholder="Select Workstation"
+                                disabled={!loc.division}
+                              />
+                              {(loc.workstation === 'Other' || (loc.workstation && loc.workstation.toLowerCase() === 'other')) && (
+                                <input
+                                  type="text"
+                                  value={otherInputs.desiredLocations[index]?.workstation || ''}
+                                  onChange={(e) => handleOtherLocationChange(index, 'workstation', e.target.value)}
+                                  placeholder="Enter Workstation Type"
+                                  className="mt-2 block w-full px-4 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm"
+                                  required
+                                />
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-sm font-bold text-slate-700">Location</label>
+                              <SearchableSelect
+                                value={loc.location}
+                                onChange={v => handleLocationChange(index, 'location', v)}
+                                options={locations || []}
+                                placeholder="Select Location"
+                                disabled={!loc.workstation}
+                              />
+                              {(loc.location === 'Other' || (loc.location && loc.location.toLowerCase() === 'other')) && (
+                                <input
+                                  type="text"
+                                  value={otherInputs.desiredLocations[index]?.station || ''}
+                                  onChange={(e) => handleOtherLocationChange(index, 'station', e.target.value)}
+                                  placeholder="Enter Location/Station"
+                                  className="mt-2 block w-full px-4 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm"
+                                  required
+                                />
+                              )}
+                            </div>
+                          </div>
+                          
                           <div className="flex items-center gap-3">
                             <div className="flex-1 space-y-2">
                               <label className="block text-sm font-bold text-slate-700">Priority</label>
-                              <select
-                                value={loc.priority}
-                                onChange={(e) => handleLocationChange(index, 'priority', parseInt(e.target.value))}
-                                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500 appearance-none"
-                              >
-                                {[1,2,3,4,5].map(p => <option key={p} value={p}>P{p}</option>)}
-                              </select>
+                              <div className="flex flex-wrap items-center gap-2 w-full">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (
+                                  <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => handleLocationChange(index, 'priority', p)}
+                                    className={`flex-1 min-w-[3.5rem] h-11 flex items-center justify-center rounded-xl text-[10px] font-black transition-all ${
+                                      Number(loc.priority) === p 
+                                        ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 scale-[1.02]' 
+                                        : 'bg-white text-slate-400 border border-slate-200 hover:border-primary-300 hover:text-primary-600 shadow-sm'
+                                    }`}
+                                  >
+                                    P{p}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                             {formData.desiredLocations.length > 1 && (
                               <button
@@ -814,12 +1026,23 @@ const CreateTransferPage = () => {
                               </button>
                             )}
                           </div>
-                        </div>
                       </div>
                     );
                   })}
+
+                  <div className="flex justify-end mt-4">
+                    <button
+                      type="button"
+                      onClick={addLocation}
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add More Choice
+                    </button>
+                  </div>
                 </div>
               </div>
+
 
               {/* Declaration & Terms */}
               <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-8 space-y-4 group">

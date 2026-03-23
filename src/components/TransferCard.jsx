@@ -4,13 +4,29 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMasterData } from '../context/MasterDataContext';
 
-const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = false }) => {
+const TransferCard = ({ transfer, onChangeStatus, isOwnRequest = false, isPublic = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { regionData } = useMasterData();
   const isAuthenticated = !!user;
-  const isMatched = transfer.status === 'matched';
-  const statusColor = isMatched ? 'bg-green-100 text-green-800 border-green-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  const statusColors = {
+    active: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    matched: 'bg-green-100 text-green-800 border-green-200',
+    inactive: 'bg-slate-100 text-slate-600 border-slate-200',
+    partner_found: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  };
+  
+  const publicStatusColors = {
+    active: 'bg-[#05D38A] shadow-[#05D38A]/20 text-white',
+    matched: 'bg-green-500 shadow-green-500/20 text-white',
+    inactive: 'bg-slate-200 shadow-slate-200/20 text-slate-500',
+    partner_found: 'bg-indigo-500 shadow-indigo-500/20 text-white',
+  };
+
+  const statusColor = statusColors[transfer.status] || 'bg-slate-50 text-slate-500 border-slate-100';
+  const pubStatusColor = publicStatusColors[transfer.status] || 'bg-slate-200 shadow-slate-200/20 text-slate-500';
+  
+  const formatStatus = (s) => (s === 'partner_found' ? 'Partner Found' : s);
 
   const zoneCode = (z) => z && regionData?.[z]?.code ? `(${regionData[z].code})` : '';
   
@@ -52,8 +68,8 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <span className="px-3 py-1 bg-[#05D38A] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-[#05D38A]/20">
-                Active
+              <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg ${pubStatusColor}`}>
+                {formatStatus(transfer.status)}
               </span>
               {transfer.category && (
                 <span className={`px-2.5 py-1 border rounded-xl text-[10px] font-black uppercase tracking-tight ${getCategoryColor(transfer.category)}`}>
@@ -65,9 +81,9 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
 
           {/* Route: FROM -> TO with Improved Connector */}
           <div className="bg-[#F8FAFC] rounded-[1.5rem] p-5 border border-slate-100 relative mb-6">
-            <div className="flex items-center justify-between gap-4 relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
               {/* From */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 w-full">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">From</span>
                 <div className="flex items-start gap-2.5">
                   <div className="bg-red-50 p-1.5 rounded-lg shrink-0">
@@ -81,19 +97,20 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
               </div>
 
               {/* Enhanced Arrow Connector */}
-              <div className="flex flex-col items-center justify-center shrink-0 w-12">
-                <div className="h-px w-full bg-slate-200 absolute z-0 hidden sm:block"></div>
-                <div className="bg-white p-2 rounded-xl shadow-md border border-slate-100 z-10 flex items-center justify-center group-hover:rotate-[360deg] transition-transform duration-700">
-                  <ArrowRight className="h-4 w-4 text-primary-600 stroke-[2.5]" />
+              <div className="flex flex-col items-center justify-center shrink-0 w-full sm:w-12 my-2 sm:my-0 relative">
+                <div className="h-[1.5px] w-full bg-slate-200 absolute top-1/2 left-0 -translate-y-1/2 z-0 hidden sm:block"></div>
+                <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 relative z-10 flex items-center justify-center sm:group-hover:rotate-[360deg] transition-transform duration-700">
+                  <ArrowRight className="h-4 w-4 text-primary-600 stroke-[2.5] hidden sm:block" />
+                  <ArrowRight className="h-4 w-4 text-primary-600 stroke-[2.5] rotate-90 sm:hidden" />
                 </div>
               </div>
 
               {/* To */}
-              <div className="flex-1 min-w-0 text-right">
+              <div className="flex-1 min-w-0 w-full text-left sm:text-right">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 px-1">
                   To {transfer.desiredLocations?.length > 1 && <span className="text-primary-600 bg-primary-50 px-1 rounded">+{transfer.desiredLocations.length - 1} More</span>}
                 </span>
-                <div className="flex items-start justify-end gap-2.5">
+                <div className="flex items-start justify-start sm:justify-end gap-2.5">
                   <div className="min-w-0">
                     <p className="font-extrabold text-slate-900 text-lg leading-none truncate">
                       {transfer.desiredLocations?.[0]?.station || transfer.desiredStation}
@@ -156,7 +173,7 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
         <div className="p-6 pt-0 mt-auto">
           {!isAuthenticated ? (
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(`/transfers/${transfer._id}`)}
               className="w-full flex items-center justify-center gap-3 py-4 bg-[#002B5B] dark:bg-slate-900 text-white font-black text-sm rounded-2xl shadow-xl shadow-[#002B5B]/10 hover:shadow-[#002B5B]/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 group/btn"
             >
               <Lock className="h-4 w-4 text-emerald-400 transition-transform group-hover/btn:rotate-12" />
@@ -165,7 +182,7 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
             </button>
           ) : (
             <button 
-              onClick={() => navigate('/transfers/search')} // or navigate to match/details page
+              onClick={() => navigate(`/transfers/${transfer._id}`)}
               className="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-black text-sm rounded-2xl shadow-xl shadow-primary-600/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 group/btn"
             >
               <Phone className="h-4 w-4 text-primary-200 transition-transform group-hover/btn:rotate-12" />
@@ -185,7 +202,7 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColor} uppercase tracking-wider`}>
-              {transfer.status}
+              {formatStatus(transfer.status)}
             </span>
             <span className="text-xs text-slate-500 flex items-center gap-1">
               <CalendarDays className="h-3 w-3" />
@@ -216,7 +233,7 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
           )}
         </div>
         
-        {isOwnRequest && !isMatched && (
+        {isOwnRequest && transfer.status !== 'matched' && (
           <div className="flex items-center gap-1">
             <button 
               onClick={() => navigate(`/transfers/edit/${transfer._id}`)}
@@ -226,11 +243,11 @@ const TransferCard = ({ transfer, onDelete, isOwnRequest = false, isPublic = fal
               <PencilLine className="h-4 w-4" />
             </button>
             <button 
-              onClick={() => onDelete(transfer._id)}
-              className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
-              title="Cancel Request"
+              onClick={() => onChangeStatus(transfer._id)}
+              className="text-slate-400 hover:text-orange-500 hover:bg-orange-50 p-2 rounded-full transition-colors"
+              title="Change Status"
             >
-              <Trash2 className="h-4 w-4" />
+              <Activity className="h-4 w-4" />
             </button>
           </div>
         )}

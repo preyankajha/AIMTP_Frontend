@@ -10,8 +10,27 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [triggeredByGoogle, setTriggeredByGoogle] = useState(false);
+  const [language, setLanguage] = useState('en');
   const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
+  
+  const termsContent = {
+    en: {
+      title: "Terms and Conditions",
+      content: "I confirm that I am an official employee of the respective sector. I understand that this platform is a facilitate for mutual transfers and the final approval depends on departmental authorities. I agree to provide accurate information and maintain the decorum of the portal.",
+      accept: "I Accept and Agree",
+      langSwitch: "हिंदी में पढ़ें"
+    },
+    hi: {
+      title: "नियम और शर्तें",
+      content: "मैं पुष्टि करता हूँ कि मैं संबंधित क्षेत्र का एक आधिकारिक कर्मचारी हूँ। मैं समझता हूँ कि यह मंच आपसी स्थानान्तरण के लिए एक सुविधा है और अंतिम अनुमोदन विभागीय अधिकारियों पर निर्भर करता है। मैं सटीक जानकारी प्रदान करने और पोर्टल की गरिमा बनाए रखने के लिए सहमत हूँ।",
+      accept: "मैं स्वीकार करता हूँ",
+      langSwitch: "Read in English"
+    }
+  };
 
   const handleGoogleAuth = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -50,6 +69,52 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex bg-white font-sans overflow-hidden">
+      {/* Terms Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 animate-scale-up">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">{termsContent[language].title}</h3>
+                <button 
+                  onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+                  className="text-[10px] font-black uppercase tracking-widest text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100 transition-colors"
+                >
+                  {termsContent[language].langSwitch}
+                </button>
+              </div>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8 max-h-[40vh] overflow-y-auto">
+                <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                  {termsContent[language].content}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setAcceptedTerms(true);
+                    setShowTermsModal(false);
+                    if (triggeredByGoogle) {
+                      setTriggeredByGoogle(false);
+                      handleGoogleAuth();
+                    }
+                  }}
+                  className="w-full py-4 bg-[#002B5B] hover:bg-slate-900 text-white font-black rounded-2xl shadow-lg transition-all active:scale-[0.98]"
+                >
+                  {termsContent[language].accept}
+                </button>
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  className="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
+                >
+                  Close without accepting
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Left Panel — Branding (Deep Blue) */}
       <div className="hidden lg:flex lg:w-[55%] bg-[#002B5B] flex-col justify-between p-16 relative overflow-hidden">
         {/* Subtle decorative glow */}
@@ -163,16 +228,39 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <input
-                id="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-5 w-5 rounded-lg border-slate-300 text-[#002B5B] focus:ring-[#002B5B] transition-all cursor-pointer"
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-2">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-[#002B5B] focus:ring-[#002B5B] transition-all cursor-pointer"
+                />
+                <label htmlFor="remember" className="text-sm font-bold text-slate-500 cursor-pointer">
+                  Remember me
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6 group">
+              <input 
+                type="checkbox" 
+                id="login-terms"
+                checked={acceptedTerms}
+                readOnly
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowTermsModal(true);
+                }}
+                className="h-4 w-4 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 transition-all cursor-pointer"
               />
-              <label htmlFor="remember" className="text-sm font-bold text-slate-500 cursor-pointer">
-                Remember me for 30 days
+              <label 
+                htmlFor="login-terms" 
+                onClick={() => setShowTermsModal(true)}
+                className="text-[11px] font-medium text-slate-500 leading-normal cursor-pointer select-none group-hover:text-slate-700 transition-colors"
+              >
+                I confirm my status and agree to the <span className="font-bold text-red-500 hover:text-red-700 underline decoration-2 underline-offset-2">Terms & Conditions</span> for Google Signup/Login.
               </label>
             </div>
 
@@ -196,7 +284,14 @@ const LoginPage = () => {
 
             <button
               type="button"
-              onClick={() => handleGoogleAuth()}
+              onClick={() => {
+                if (!acceptedTerms) {
+                  setTriggeredByGoogle(true);
+                  setShowTermsModal(true);
+                  return;
+                }
+                handleGoogleAuth();
+              }}
               disabled={loading}
               className="mt-6 w-full flex items-center justify-center gap-3 py-4 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-2xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group"
             >

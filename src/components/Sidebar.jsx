@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   LayoutDashboard,
   Search,
@@ -15,9 +16,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-const Sidebar = () => {
+const Sidebar = ({ closeSidebar }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [profileImg, setProfileImg] = useState(null);
   useEffect(() => {
@@ -32,6 +34,7 @@ const Sidebar = () => {
   }, [user]);
 
   const handleLogout = () => {
+    setShowConfirm(false);
     navigate('/');
     logout();
   };
@@ -130,6 +133,13 @@ const Sidebar = () => {
               <span className="text-sm font-medium">{item.name}</span>
             </NavLink>
           ))}
+          <button
+            onClick={() => setShowConfirm(true)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-red-300 hover:bg-red-500/10 hover:text-red-400 font-bold"
+          >
+            <LogOut className="h-4.5 w-4.5 shrink-0 opacity-80" />
+            <span className="text-sm">Logout</span>
+          </button>
         </nav>
 
         {/* User Card */}
@@ -145,15 +155,26 @@ const Sidebar = () => {
             <p className="text-sm font-bold truncate leading-tight">{user?.name}</p>
             <p className="text-[10px] font-medium text-white/40 truncate mt-0.5 capitalize">{user?.role || 'Employee'}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-            title="Logout"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
         </div>
       </div>
+
+      {showConfirm && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full relative z-10 shadow-2xl text-center animate-fade-in-up">
+            <div className="h-12 w-12 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-500">
+               <LogOut className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 mb-1">Are you sure want to logout?</h3>
+            <p className="text-[11px] text-slate-500 font-medium mb-6">You will need to sign in again to access dashboard choices and requests.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setShowConfirm(false)} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all">Cancel</button>
+              <button type="button" onClick={handleLogout} className="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-red-500/10 transition-all">Yes, Logout</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

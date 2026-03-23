@@ -5,17 +5,29 @@ import { User, Mail, Phone, Clock, ShieldCheck, ShieldAlert, Building, Edit3, Lo
 import { Link } from 'react-router-dom';
 import { sendVerificationOtp, verifyEmailOtp, uploadProfileImage, updateProfileImageUrl } from '../services/authService';
 
-const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-start gap-4">
-    <div className="h-9 w-9 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center shrink-0 text-slate-400">
-      <Icon className="h-4 w-4" />
+const InfoRow = ({ icon: Icon, label, value, href }) => {
+  const content = (
+    <div className="flex items-start gap-4">
+      <div className="h-9 w-9 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center shrink-0 text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+        <p className="text-slate-900 font-bold text-sm mt-0.5">{value || '—'}</p>
+      </div>
     </div>
-    <div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-      <p className="text-slate-900 font-bold text-sm mt-0.5">{value || '—'}</p>
-    </div>
-  </div>
-);
+  );
+
+  if (href && value) {
+    return (
+      <a href={href} className="group block" target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}>
+        {content}
+      </a>
+    );
+  }
+
+  return content;
+};
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -314,8 +326,9 @@ const ProfilePage = () => {
             <Mail className="h-3.5 w-3.5" /> Contact Information
           </h3>
           <div className="space-y-5">
-            <InfoRow icon={Mail} label="Email Address" value={user?.email} />
-            <InfoRow icon={Phone} label="Mobile Number" value={user?.mobile} />
+            <InfoRow icon={Mail} label="Email Address" value={user?.email} href={`mailto:${user?.email}`} />
+            <InfoRow icon={Phone} label="Mobile Number" value={user?.mobile} href={`tel:${user?.mobile}`} />
+            <InfoRow icon={Phone} label="WhatsApp Number" value={user?.whatsapp} href={`https://wa.me/${user?.whatsapp?.replace(/\D/g, '')}`} />
           </div>
         </div>
 

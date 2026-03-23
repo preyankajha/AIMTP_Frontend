@@ -37,6 +37,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [acceptedDeclaration, setAcceptedDeclaration] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [triggeredByGoogle, setTriggeredByGoogle] = useState(false);
   const [language, setLanguage] = useState('en');
   const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
@@ -122,6 +123,10 @@ const RegisterPage = () => {
                   onClick={() => {
                     setAcceptedDeclaration(true);
                     setShowTermsModal(false);
+                    if (triggeredByGoogle) {
+                      setTriggeredByGoogle(false);
+                      handleGoogleAuth();
+                    }
                   }}
                   className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-2xl shadow-lg shadow-primary-600/20 transition-all active:scale-[0.98]"
                 >
@@ -242,7 +247,14 @@ const RegisterPage = () => {
 
               <button
                 type="button"
-                onClick={() => handleGoogleAuth()}
+                onClick={() => {
+                  if (!acceptedDeclaration) {
+                    setTriggeredByGoogle(true);
+                    setShowTermsModal(true);
+                    return;
+                  }
+                  handleGoogleAuth();
+                }}
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-4 group"
               >

@@ -24,9 +24,18 @@ const MatchesPage = () => {
     }
   };
 
-  const handleContactRevealed = (matchId, mobile) => {
+  const handleContactRevealed = (matchId, result) => {
     setMatches((prev) =>
-      prev.map((m) => m.matchId === matchId ? { ...m, contactRevealed: true, partner: { ...m.partner, mobile } } : m)
+      prev.map((m) => m.matchId === matchId ? { 
+        ...m, 
+        contactRevealed: true, 
+        partner: { 
+          ...m.partner, 
+          mobile: result.partnerMobile,
+          whatsapp: result.partnerWhatsapp,
+          email: result.partnerEmail
+        } 
+      } : m)
     );
   };
 
