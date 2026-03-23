@@ -47,7 +47,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     authService.logout();
-    setUser(null);
+    // Redirect to landing page and clear all state via refresh
+    // We avoid setUser(null) here to prevent the flicker of the login page
+    // caused by ProtectedRoute reacting to the state change before the redirect finishes.
+    window.location.href = '/';
   };
 
   const updateUserProfile = (updatedUser) => {

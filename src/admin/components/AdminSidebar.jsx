@@ -30,7 +30,6 @@ const AdminSidebar = ({ closeSidebar }) => {
   }, [user]);
 
   const handleLogout = () => {
-    navigate('/');
     logout();
   };
 

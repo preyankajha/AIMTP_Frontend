@@ -35,7 +35,6 @@ const Sidebar = ({ closeSidebar }) => {
 
   const handleLogout = () => {
     setShowConfirm(false);
-    navigate('/');
     logout();
   };
 
