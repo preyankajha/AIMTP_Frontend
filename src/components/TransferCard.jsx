@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMasterData } from '../context/MasterDataContext';
+import UserAvatar from './UserAvatar';
 
 const TransferCard = ({ transfer, onChangeStatus, isOwnRequest = false, isPublic = false }) => {
   const navigate = useNavigate();
@@ -41,18 +42,19 @@ const TransferCard = ({ transfer, onChangeStatus, isOwnRequest = false, isPublic
     }
   };
   
-  // Public-specific layout
   // Public-specific layout (Modern SaaS Style)
   if (isPublic) {
     return (
-      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/80 overflow-hidden flex flex-col h-full hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 group">
+      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/80 overflow-hidden flex flex-col h-full hover:shadow-[0_20px_40_rgb(0,0,0,0.08)] transition-all duration-500 group">
         <div className="p-6 flex-1">
           {/* Header: Profile Info */}
           <div className="flex justify-between items-start mb-6">
-            <div className="flex items-start gap-3">
-              <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0 group-hover:scale-105 transition-transform duration-500">
-                 <Building className="h-6 w-6 text-slate-400" />
-              </div>
+            <div className="flex items-start gap-4">
+              <UserAvatar 
+                user={transfer.userId} 
+                designation={transfer.designation} 
+                className="h-14 w-14 rounded-2xl border-2 border-white shadow-xl shadow-slate-200/50 group-hover:scale-105 transition-transform duration-500"
+              />
               <div>
                 <h3 className="text-lg font-black text-slate-900 leading-tight">
                   {transfer.userId?.name || 'Employee'}
@@ -216,18 +218,25 @@ const TransferCard = ({ transfer, onChangeStatus, isOwnRequest = false, isPublic
           </div>
           
           {!isOwnRequest && transfer.userId && (
-            <div className="mt-2 text-sm font-medium text-slate-900 flex flex-col">
-              <span className="text-base">{transfer.userId.name}</span>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                <span className="text-xs text-slate-500 font-bold px-1.5 py-0.5 bg-slate-100 rounded">
-                  {transfer.sector || 'Railway'}
-                </span>
-                <span className="text-xs text-primary-600 font-bold px-1.5 py-0.5 bg-primary-50 rounded">
-                  {transfer.department}
-                </span>
-                <span className="text-xs text-slate-500 font-normal">
-                  {transfer.designation}
-                </span>
+            <div className="mt-2 text-sm font-medium text-slate-900 flex items-center gap-3">
+              <UserAvatar 
+                user={transfer.userId} 
+                designation={transfer.designation} 
+                className="h-10 w-10 rounded-lg shadow-sm"
+              />
+              <div className="flex flex-col">
+                <span className="text-base font-bold">{transfer.userId.name}</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                  <span className="text-xs text-slate-500 font-bold px-1.5 py-0.5 bg-slate-100 rounded">
+                    {transfer.sector || 'Railway'}
+                  </span>
+                  <span className="text-xs text-primary-600 font-bold px-1.5 py-0.5 bg-primary-50 rounded">
+                    {transfer.department}
+                  </span>
+                  <span className="text-xs text-slate-500 font-normal">
+                    {transfer.designation}
+                  </span>
+                </div>
               </div>
             </div>
           )}

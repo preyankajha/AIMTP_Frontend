@@ -3,12 +3,22 @@ import { getUsers, suspendUser, deleteUser } from '../services/adminService';
 import AdminTable from '../components/AdminTable';
 import { ShieldAlert, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import UserDetailsModal from '../components/UserDetailsModal';
 
 const AdminUsersPage = () => {
   const [data, setData] = useState({ users: [], total: 0, page: 1, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+
+  // Profile modal state
+  const [userProfileModal, setUserProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
+  const openUserProfile = (userId) => {
+    setSelectedUserId(userId);
+    setUserProfileModal(true);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -60,10 +70,13 @@ const AdminUsersPage = () => {
       header: 'User details',
       accessor: 'name',
       render: (row) => (
-        <div>
-          <p className="font-bold text-slate-800">{row.name}</p>
-          <p className="text-xs text-slate-500 font-medium">{row.email}</p>
-          <p className="text-[10px] text-slate-400 font-mono mt-0.5">{row.mobile}</p>
+        <div 
+          className="cursor-pointer group/userinfo"
+          onClick={() => openUserProfile(row._id)}
+        >
+          <p className="font-bold text-slate-800 group-hover/userinfo:text-primary-600 transition-colors">{row.name}</p>
+          <p className="text-xs text-slate-500 font-medium group-hover/userinfo:text-slate-600">{row.email}</p>
+          <p className="text-[10px] text-slate-400 font-mono mt-0.5 group-hover/userinfo:text-slate-500">{row.mobile}</p>
         </div>
       )
     },
@@ -136,6 +149,12 @@ const AdminUsersPage = () => {
         searchValue={search}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search name, email, or mobile..."
+      />
+
+      <UserDetailsModal 
+        isOpen={userProfileModal}
+        onClose={() => setUserProfileModal(false)}
+        userId={selectedUserId}
       />
     </div>
   );

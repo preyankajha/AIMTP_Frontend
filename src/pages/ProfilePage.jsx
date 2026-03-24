@@ -4,6 +4,7 @@ import { useMasterData } from '../context/MasterDataContext';
 import { User, Mail, Phone, Clock, ShieldCheck, ShieldAlert, Building, Edit3, Loader2, PartyPopper, Camera, Briefcase, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendVerificationOtp, verifyEmailOtp, uploadProfileImage, updateProfileImageUrl } from '../services/authService';
+import UserAvatar from '../components/UserAvatar';
 
 const InfoRow = ({ icon: Icon, label, value, href }) => {
   const content = (
@@ -53,12 +54,22 @@ const ProfilePage = () => {
 
   // Resolve full URL for the image intelligently
   const profileImageUrl = user?.profileImage
-    ? (user.profileImage.startsWith('http') 
+    ? (user.profileImage.startsWith('http') || user.profileImage.startsWith('/avatars')
         ? user.profileImage 
         : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${user.profileImage}`)
     : null;
 
   const defaultAvatars = [
+    "/avatars/loco_pilot.png",
+    "/avatars/goods_guard.png",
+    "/avatars/station_master.png",
+    "/avatars/tte.png",
+    "/avatars/trackman.png",
+    "/avatars/rpf.png",
+    "/avatars/doctor.png",
+    "/avatars/clerk.png",
+    "/avatars/chef.png",
+    "/avatars/mechanic.png",
     `https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=f8fafc`,
     `https://api.dicebear.com/7.x/notionists/svg?seed=Aneka&backgroundColor=f8fafc`,
     `https://api.dicebear.com/7.x/notionists/svg?seed=Oliver&backgroundColor=f8fafc`,
@@ -66,6 +77,39 @@ const ProfilePage = () => {
     `https://api.dicebear.com/7.x/notionists/svg?seed=Jasper&backgroundColor=f8fafc`,
     `https://api.dicebear.com/7.x/notionists/svg?seed=Maya&backgroundColor=f8fafc`,
     `https://api.dicebear.com/7.x/notionists/svg?seed=Zoe&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Leo&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Jack&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Harry&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Charlie&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=George&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Noah&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Thomas&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Chloe&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Grace&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Ivy&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Evie&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Isla&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Lily&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=William&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=James&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Lucas&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Henry&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Benjamin&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Alexander&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Michael&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Daniel&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Matthew&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Andrew&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Mia&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Emily&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Abigail&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Harper&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Ella&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Scarlett&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Madison&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Victoria&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Aria&backgroundColor=f8fafc`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=Luna&backgroundColor=f8fafc`,
   ];
 
   // Sync state if context updates later
@@ -168,12 +212,11 @@ const ProfilePage = () => {
           <div className="flex items-end justify-between -mt-10 mb-6 relative">
             
             <div className="p-1 bg-white rounded-[1.25rem] shadow-lg border-4 border-white relative group">
-              <div className="h-24 w-24 bg-primary-900 rounded-xl flex items-center justify-center overflow-hidden relative">
-                {profileImageUrl ? (
-                  <img src={profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl font-black text-white">{initials}</span>
-                )}
+              <div className="h-24 w-24 rounded-xl flex items-center justify-center overflow-hidden relative">
+                <UserAvatar 
+                  user={user} 
+                  className="h-full w-full"
+                />
                 
                 {/* Upload Overlay */}
                 <div 
@@ -238,7 +281,7 @@ const ProfilePage = () => {
               key={i}
               onClick={() => handleSelectAvatar(url)}
               disabled={uploadingImg}
-              className={`h-16 w-16 rounded-2xl overflow-hidden border-2 transition-all hover:scale-110 active:scale-95 ${
+              className={`h-16 w-16 rounded-2xl overflow-hidden border-2 transition-all hover:scale-110 active:scale-95 bg-white ${
                 user?.profileImage === url ? 'border-primary-500 ring-4 ring-primary-500/10 scale-105' : 'border-slate-100 hover:border-primary-200'
               }`}
             >
@@ -246,7 +289,6 @@ const ProfilePage = () => {
             </button>
           ))}
           
-          {/* Custom Upload Trigger Mirror */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingImg}

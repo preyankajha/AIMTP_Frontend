@@ -12,26 +12,17 @@ import {
   Plus,
   Repeat,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Database
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import UserAvatar from './UserAvatar';
 
 const Sidebar = ({ closeSidebar }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [profileImg, setProfileImg] = useState(null);
-  useEffect(() => {
-    if (user?.profileImage) {
-      const url = user.profileImage.startsWith('http') 
-        ? user.profileImage 
-        : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${user.profileImage}`;
-      setProfileImg(url);
-    } else {
-      setProfileImg(null);
-    }
-  }, [user]);
 
   const handleLogout = () => {
     setShowConfirm(false);
@@ -43,6 +34,7 @@ const Sidebar = ({ closeSidebar }) => {
     { name: 'Search Transfers', path: '/transfers/search', icon: Search },
     { name: 'My Requests', path: '/transfers/my', icon: List },
     { name: 'My Matches', path: '/matches/my', icon: Users },
+    { name: 'Data Integrity', path: '/suggest-data', icon: Database },
     { name: 'Notifications', path: '/notifications', icon: Bell },
   ];
 
@@ -143,13 +135,10 @@ const Sidebar = ({ closeSidebar }) => {
 
         {/* User Card */}
         <div className="bg-primary-900/40 rounded-[1.25rem] p-3 border border-white/5 flex items-center gap-3 group relative cursor-pointer" onClick={() => {navigate('/profile'); if(closeSidebar) closeSidebar();}}>
-          <div className="h-10 w-10 rounded-full bg-emerald-500 text-primary-950 flex items-center justify-center font-black text-sm border-2 border-white/10 shrink-0 overflow-hidden relative">
-            {profileImg ? (
-              <img src={profileImg} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              user?.name?.split(' ').map(n => n[0]).join('') || 'U'
-            )}
-          </div>
+          <UserAvatar 
+            user={user} 
+            className="h-10 w-10 border-2 border-white/10"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold truncate leading-tight">{user?.name}</p>
             <p className="text-[10px] font-medium text-white/40 truncate mt-0.5 capitalize">{user?.role || 'Employee'}</p>

@@ -11,7 +11,7 @@ import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, 
  * SelectInput — wraps SearchableSelect and handles the "Other" custom-text fallback.
  * Passes options as {value,label} and appends "Other" when needed.
  */
-const SelectInput = ({ label, name, value, options, placeholder, onChange, otherValue, onOtherChange }) => {
+const SelectInput = ({ label, name, value, options, placeholder, onChange, otherValue, onOtherChange, suggestLink }) => {
   const isOtherSelected = value === 'Other' || value === 'OTHER';
 
   // Normalise to {value, label}
@@ -33,7 +33,10 @@ const SelectInput = ({ label, name, value, options, placeholder, onChange, other
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-bold text-slate-700">{label}</label>
+      <div className="flex items-end justify-between mb-1">
+        <label className="block text-sm font-bold text-slate-700">{label}</label>
+        {suggestLink}
+      </div>
       <SearchableSelect
         value={value}
         onChange={handleChange}
@@ -81,7 +84,9 @@ const CreateTransferPage = () => {
     gradePay: '',
     basicPay: '',
     category: '',
+    category: '',
     workplaceRemark: '',
+    appointmentDate: '',
     contactOptions: {
       email: user?.email || '',
       phone: user?.mobile || '',
@@ -142,6 +147,7 @@ const CreateTransferPage = () => {
         gradePay: user.gradePay || prev.gradePay,
         basicPay: user.basicPay || prev.basicPay,
         workplaceRemark: user.workplaceRemark || prev.workplaceRemark,
+        appointmentDate: user.appointmentDate ? user.appointmentDate.split('T')[0] : prev.appointmentDate,
         contactOptions: {
           email: user.email || prev.contactOptions.email,
           phone: user.mobile || prev.contactOptions.phone,
@@ -395,6 +401,7 @@ const CreateTransferPage = () => {
           newFormData.basicPay = data.basicPay || '';
           newFormData.category = data.category || '';
           newFormData.workplaceRemark = data.workplaceRemark || '';
+          newFormData.appointmentDate = data.appointmentDate ? data.appointmentDate.split('T')[0] : '';
 
           if (data.contactOptions) {
             newFormData.contactOptions = {
@@ -536,6 +543,17 @@ const CreateTransferPage = () => {
       setLoading(false);
     }
   };
+
+  const SuggestLink = ({ type, initialData }) => (
+    <button
+      type="button"
+      onClick={() => navigate(`/suggest-data?type=${type}`)}
+      className="text-[9px] font-black text-primary-600 hover:text-white hover:bg-primary-600 flex items-center gap-1 transition-all uppercase tracking-widest bg-primary-50 px-2.5 py-1 rounded-md focus:outline-none"
+    >
+      <Plus className="h-3 w-3 -ml-0.5" />
+      Missing?
+    </button>
+  );
 
   const termsContent = {
     en: {
@@ -722,6 +740,7 @@ const CreateTransferPage = () => {
                     onChange={handleChange}
                     otherValue={otherInputs.department}
                     onOtherChange={handleOtherChange}
+                    suggestLink={<SuggestLink type="Department" />}
                   />
                   <SelectInput 
                     label="Sub-Department" 
@@ -793,6 +812,16 @@ const CreateTransferPage = () => {
                     onChange={handleChange}
                     placeholder="Select Category"
                   />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-black text-slate-700">Date of Appointment</label>
+                    <input
+                      type="date"
+                      name="appointmentDate"
+                      value={formData.appointmentDate}
+                      onChange={handleChange}
+                      className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all font-medium"
+                    />
+                  </div>
                 </div>
 
                 {/* Identification / Current Posting Block */}
@@ -913,7 +942,10 @@ const CreateTransferPage = () => {
 
                           <div className="space-y-4 md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="space-y-2">
-                              <label className="block text-sm font-bold text-slate-700">Region/Zone</label>
+                              <div className="flex justify-between items-end mb-1">
+                                <label className="block text-sm font-bold text-slate-700">Region/Zone</label>
+                                <SuggestLink type="Zone" />
+                              </div>
                               <SearchableSelect
                                 value={loc.zone}
                                 onChange={v => handleLocationChange(index, 'zone', v)}
@@ -975,7 +1007,10 @@ const CreateTransferPage = () => {
                               )}
                             </div>
                             <div className="space-y-2">
-                              <label className="block text-sm font-bold text-slate-700">Location</label>
+                              <div className="flex justify-between items-end mb-1">
+                                <label className="block text-sm font-bold text-slate-700">Location</label>
+                                <SuggestLink type="Location" initialData={{ zone: loc.zone, division: loc.division, workstationType: loc.workstation }} />
+                              </div>
                               <SearchableSelect
                                 value={loc.location}
                                 onChange={v => handleLocationChange(index, 'location', v)}

@@ -63,6 +63,7 @@ const SettingsPage = () => {
     category: user?.category || '',
     modeOfSelection: user?.modeOfSelection || '',
     workplaceRemark: user?.workplaceRemark || '',
+    appointmentDate: user?.appointmentDate ? user.appointmentDate.split('T')[0] : '',
     mobile: user?.mobile || '',
     whatsapp: user?.whatsapp || ''
   });
@@ -256,6 +257,7 @@ const SettingsPage = () => {
       basicPay: user?.basicPay || '',
       category: user?.category || '',
       workplaceRemark: user?.workplaceRemark || '',
+      appointmentDate: user?.appointmentDate ? user.appointmentDate.split('T')[0] : '',
       mobile: user?.mobile || '',
       whatsapp: user?.whatsapp || ''
     });
@@ -779,6 +781,15 @@ const SettingsPage = () => {
                                 className={`w-full px-4 py-2 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-primary-900'} border border-primary-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500/20 mt-1 animate-slide-up`}
                               />
                             )}
+                          </div>
+
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Appointment</label>
+                             <input 
+                               type="date" name="appointmentDate" value={profileForm.appointmentDate} onChange={handleProfileChange}
+                               disabled={!isEditing}
+                               className={`w-full px-4 py-2.5 ${!isEditing ? 'bg-slate-50 text-slate-500' : 'bg-white text-slate-700'} border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20`}
+                             />
                           </div>
                         </div>
                       </div>

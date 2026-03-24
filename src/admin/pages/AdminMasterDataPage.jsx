@@ -72,6 +72,7 @@ const AdminMasterDataPage = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [sectors, setSectors] = useState([]);
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'list'
+  const [duplicateModal, setDuplicateModal] = useState({ open: false, type: '', data: [], removing: false });
 
   // Zone editor drill-down state
   const [zoneDivIdx, setZoneDivIdx] = useState(null);   // selected division index
@@ -130,6 +131,32 @@ const AdminMasterDataPage = () => {
       alert("Failed to seed data");
     } finally {
       setSeeding(false);
+    }
+  };
+  
+  const handleCheckDuplicates = async (type) => {
+    try {
+      setDuplicateModal(prev => ({ ...prev, open: true, type, data: [], loading: true }));
+      const res = await api.get(`/master-data/duplicates?type=${type}`);
+      setDuplicateModal(prev => ({ ...prev, data: res.data, loading: false }));
+    } catch (e) {
+      alert("Failed to check duplicates");
+      setDuplicateModal(prev => ({ ...prev, open: false }));
+    }
+  };
+  
+  const handleRemoveDuplicates = async () => {
+    if (!window.confirm(`Are you sure you want to remove ${duplicateModal.data.length / 2} duplicate entries? This will keep the oldest entry and delete newer ones.`)) return;
+    try {
+      setDuplicateModal(prev => ({ ...prev, removing: true }));
+      await api.post('/master-data/remove-duplicates', { type: duplicateModal.type });
+      await fetchData();
+      setDuplicateModal({ open: false, type: '', data: [], removing: false });
+      alert("Duplicates removed successfully");
+    } catch (e) {
+      alert("Failed to remove duplicates");
+    } finally {
+      setDuplicateModal(prev => ({ ...prev, removing: false }));
     }
   };
 
@@ -453,6 +480,15 @@ const AdminMasterDataPage = () => {
                   <p className="text-sm font-black text-slate-700 capitalize flex items-center gap-2">
                     Viewing: <span className="text-primary-600">{activeTab.replace(/([A-Z])/g, ' $1')}</span>
                   </p>
+                  <div className="flex-1" />
+                  {['zones', 'locations', 'departments', 'workstationTypes'].includes(activeTab) && (
+                    <button
+                      onClick={() => handleCheckDuplicates(activeTab)}
+                      className="text-xs font-black text-orange-600 bg-orange-50 hover:bg-orange-100 px-4 py-2 rounded-xl transition-all flex items-center gap-2"
+                    >
+                      🔍 Check Duplicates
+                    </button>
+                  )}
                 </div>
                 
                 {/* Lists Layout */}
@@ -1437,6 +1473,73 @@ const AdminMasterDataPage = () => {
                 {saving ? 'Saving...' : 'Save Data'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── Duplicates Modal ── */}
+      {duplicateModal.open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDuplicateModal({ open: false, type: '', data: [], removing: false })} />
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col relative z-[101] animate-fade-in-up">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Duplicate {duplicateModal.type}</h2>
+                <p className="text-xs font-bold text-slate-500 mt-1">Identified based on exact name matches.</p>
+              </div>
+              <button 
+                onClick={() => setDuplicateModal({ open: false, type: '', data: [], removing: false })} 
+                className="text-slate-400 hover:text-slate-900 text-sm font-bold bg-slate-100 px-4 py-2 rounded-xl transition-all"
+              >
+                Close
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+              {duplicateModal.loading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-10 w-10 text-primary-200 animate-spin mb-4" />
+                  <p className="text-slate-400 font-bold">Scanning database for duplicates...</p>
+                </div>
+              ) : duplicateModal.data.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="h-16 w-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="h-8 w-8" />
+                  </div>
+                  <p className="text-slate-900 font-black">Success! No duplicates found.</p>
+                  <p className="text-slate-500 text-xs font-medium mt-1">Your {duplicateModal.type} registry is clean.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-6">
+                    <p className="text-xs font-bold text-orange-700 leading-relaxed">
+                      Found <strong>{duplicateModal.data.length}</strong> items that share names. Clicking "Auto-Clean" will keep the <strong>oldest</strong> entry (first created) and permanently delete the others.
+                    </p>
+                  </div>
+                  {duplicateModal.data.map((item, idx) => (
+                    <div key={item._id} className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between group">
+                      <div>
+                        <p className="text-sm font-black text-slate-900">{item.name || item.group}</p>
+                        <p className="text-[10px] text-slate-400 font-bold">ID: {item._id} • Created: {new Date(item.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className="text-[10px] bg-slate-50 text-slate-400 px-2 py-0.5 rounded font-black">DUPE</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {duplicateModal.data.length > 0 && (
+              <div className="p-6 border-t border-slate-100">
+                <button
+                  onClick={handleRemoveDuplicates}
+                  disabled={duplicateModal.removing}
+                  className="w-full flex justify-center items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-5 py-3.5 rounded-xl font-black shadow-lg shadow-orange-900/10 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {duplicateModal.removing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-orange-200" />}
+                  {duplicateModal.removing ? 'Cleaning Registry...' : `Auto-Clean ${duplicateModal.data.length} Duplicates`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

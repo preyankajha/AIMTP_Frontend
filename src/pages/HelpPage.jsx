@@ -18,7 +18,7 @@ const HelpPage = () => (
     {/* Contact Cards */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
       <a
-        href="mailto:support@aimtp.in"
+        href="mailto:priyankadigitechservices@gmail.com"
         className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-primary-200 hover:shadow-md transition-all group"
       >
         <div className="h-12 w-12 bg-primary-50 border border-primary-100 rounded-xl flex items-center justify-center text-primary-700 group-hover:bg-primary-100 transition-colors shrink-0">
@@ -26,7 +26,7 @@ const HelpPage = () => (
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-slate-900 text-sm">Email Support</p>
-          <p className="text-[11px] font-medium text-slate-400 mt-0.5 truncate">support@aimtp.in</p>
+          <p className="text-[11px] font-medium text-slate-400 mt-0.5 truncate">priyankadigitechservices@gmail.com</p>
         </div>
         <ExternalLink className="h-4 w-4 text-slate-300 group-hover:text-primary-500 transition-colors" />
       </a>
@@ -63,7 +63,7 @@ const HelpPage = () => (
     {/* Developer Info */}
     <div className="mt-8 bg-primary-50 border border-primary-100 rounded-[1.5rem] p-6">
       <p className="text-sm text-primary-800 font-medium">
-        <span className="font-black">Developed by</span> Saurav Kr Mishra · This platform is independently operated and domain-neutral.
+        <span className="font-black">Developed by</span> Priyanka DigiTech Services · This platform is independently operated and domain-neutral.
       </p>
     </div>
   </div>

@@ -18,6 +18,7 @@ import SearchTransfersPage from './pages/SearchTransfersPage';
 import LandingPage from './pages/LandingPage';
 import TermsPage from './pages/TermsPage';
 import TransferDetailsPage from './pages/TransferDetailsPage';
+import DataSuggestionPage from './pages/DataSuggestionPage';
 
 import { AuthProvider } from './context/AuthProvider';
 import { MasterDataProvider } from './context/MasterDataContext';
@@ -33,6 +34,7 @@ import AdminMatchesPage from './admin/pages/AdminMatchesPage';
 import AdminAnalyticsPage from './admin/pages/AdminAnalyticsPage';
 import AdminSettingsPage from './admin/pages/AdminSettingsPage';
 import AdminMasterDataPage from './admin/pages/AdminMasterDataPage';
+import AdminSuggestionsPage from './admin/pages/AdminSuggestionsPage';
 
 function App() {
   return (
@@ -67,6 +69,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/help" element={<HelpPage />} />
+            <Route path="/suggest-data" element={<DataSuggestionPage />} />
           </Route>
 
           {/* Admin Routes */}
@@ -83,6 +86,7 @@ function App() {
             <Route path="/admin/matches" element={<AdminMatchesPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
             <Route path="/admin/master-data" element={<AdminMasterDataPage />} />
+            <Route path="/admin/suggestions" element={<AdminSuggestionsPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
 

@@ -17,9 +17,11 @@ const LandingPage = () => {
   const [filters, setFilters] = useState({
     zone: '',
     division: '',
+    workstation: '',
     station: '',
     desiredZone: '',
     desiredDivision: '',
+    desiredWorkstation: '',
     desiredStation: '',
     designation: '',
     sector: ''
@@ -36,12 +38,14 @@ const LandingPage = () => {
   const zoneList = getZoneList();
 
   // From Lists
-  const divisionList = filters.zone && regionData?.[filters.zone] ? Object.keys(regionData[filters.zone].divisions) : [];
-  const stationList = filters.zone && filters.division && regionData?.[filters.zone]?.divisions[filters.division] ? regionData[filters.zone].divisions[filters.division] : [];
+  const divisionList = filters.zone && regionData?.[filters.zone] ? Object.keys(regionData[filters.zone].divisions || {}) : [];
+  const workstationList = filters.zone && filters.division && regionData?.[filters.zone]?.divisions?.[filters.division] ? Object.keys(regionData[filters.zone].divisions[filters.division]) : [];
+  const stationList = filters.zone && filters.division && filters.workstation && regionData?.[filters.zone]?.divisions?.[filters.division]?.[filters.workstation] ? regionData[filters.zone].divisions[filters.division][filters.workstation] : [];
 
   // To Lists
-  const desiredDivisionList = filters.desiredZone && regionData?.[filters.desiredZone] ? Object.keys(regionData[filters.desiredZone].divisions) : [];
-  const desiredStationList = filters.desiredZone && filters.desiredDivision && regionData?.[filters.desiredZone]?.divisions[filters.desiredDivision] ? regionData[filters.desiredZone].divisions[filters.desiredDivision] : [];
+  const desiredDivisionList = filters.desiredZone && regionData?.[filters.desiredZone] ? Object.keys(regionData[filters.desiredZone].divisions || {}) : [];
+  const desiredWorkstationList = filters.desiredZone && filters.desiredDivision && regionData?.[filters.desiredZone]?.divisions?.[filters.desiredDivision] ? Object.keys(regionData[filters.desiredZone].divisions[filters.desiredDivision]) : [];
+  const desiredStationList = filters.desiredZone && filters.desiredDivision && filters.desiredWorkstation && regionData?.[filters.desiredZone]?.divisions?.[filters.desiredDivision]?.[filters.desiredWorkstation] ? regionData[filters.desiredZone].divisions[filters.desiredDivision][filters.desiredWorkstation] : [];
 
   // Flattening designations for the filter
   const allDesignations = Object.values(departments || {}).flatMap(dept =>
@@ -69,10 +73,12 @@ const LandingPage = () => {
     const { name, value } = e.target;
     setFilters(prev => {
       const newFilters = { ...prev, [name]: value };
-      if (name === 'zone') { newFilters.division = ''; newFilters.station = ''; }
-      if (name === 'division') { newFilters.station = ''; }
-      if (name === 'desiredZone') { newFilters.desiredDivision = ''; newFilters.desiredStation = ''; }
-      if (name === 'desiredDivision') { newFilters.desiredStation = ''; }
+      if (name === 'zone') { newFilters.division = ''; newFilters.workstation = ''; newFilters.station = ''; }
+      if (name === 'division') { newFilters.workstation = ''; newFilters.station = ''; }
+      if (name === 'workstation') { newFilters.station = ''; }
+      if (name === 'desiredZone') { newFilters.desiredDivision = ''; newFilters.desiredWorkstation = ''; newFilters.desiredStation = ''; }
+      if (name === 'desiredDivision') { newFilters.desiredWorkstation = ''; newFilters.desiredStation = ''; }
+      if (name === 'desiredWorkstation') { newFilters.desiredStation = ''; }
       return newFilters;
     });
   };
@@ -80,8 +86,8 @@ const LandingPage = () => {
   const handleModeChange = (mode) => {
     setSearchMode(mode);
     setFilters({
-      zone: '', division: '', station: '',
-      desiredZone: '', desiredDivision: '', desiredStation: '',
+      zone: '', division: '', workstation: '', station: '',
+      desiredZone: '', desiredDivision: '', desiredWorkstation: '', desiredStation: '',
       designation: filters.designation,
       sector: filters.sector
     });
@@ -89,8 +95,8 @@ const LandingPage = () => {
 
   const resetFilters = () => {
     setFilters({
-      zone: '', division: '', station: '',
-      desiredZone: '', desiredDivision: '', desiredStation: '',
+      zone: '', division: '', workstation: '', station: '',
+      desiredZone: '', desiredDivision: '', desiredWorkstation: '', desiredStation: '',
       designation: '',
       sector: ''
     });
@@ -104,15 +110,17 @@ const LandingPage = () => {
     if (searchMode === 'any') {
       if (filters.zone) result = result.filter(t => t.currentZone === filters.zone);
       if (filters.division) result = result.filter(t => t.currentDivision === filters.division);
+      if (filters.workstation) result = result.filter(t => t.currentWorkstation === filters.workstation);
       if (filters.station) result = result.filter(t => t.currentStation === filters.station);
     } else {
-      // Route Match
       if (filters.zone) result = result.filter(t => t.currentZone === filters.zone);
       if (filters.division) result = result.filter(t => t.currentDivision === filters.division);
+      if (filters.workstation) result = result.filter(t => t.currentWorkstation === filters.workstation);
       if (filters.station) result = result.filter(t => t.currentStation === filters.station);
 
       if (filters.desiredZone) result = result.filter(t => t.desiredZone === filters.desiredZone);
       if (filters.desiredDivision) result = result.filter(t => t.desiredDivision === filters.desiredDivision);
+      if (filters.desiredWorkstation) result = result.filter(t => t.desiredWorkstation === filters.desiredWorkstation);
       if (filters.desiredStation) result = result.filter(t => t.desiredStation === filters.desiredStation);
     }
 
@@ -298,12 +306,12 @@ const LandingPage = () => {
                     /* Advanced Filters for Railway */
                     <div className="flex flex-col gap-8 animate-fade-in">
                       {searchMode === 'any' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Region</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Zone</label>
                             <div className="relative">
                               <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate">
-                                <option value="">Any Region</option>
+                                <option value="">Any Zone</option>
                                 {zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -320,10 +328,20 @@ const LandingPage = () => {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Station</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Workstation Type</label>
                             <div className="relative">
-                              <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
-                                <option value="">Any Station</option>
+                              <select name="workstation" value={filters.workstation} onChange={handleFilterChange} disabled={!filters.division} title={filters.workstation} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
+                                <option value="">Any Workstation</option>
+                                {workstationList.map(w => <option key={w} value={w}>{w}</option>)}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Location</label>
+                            <div className="relative">
+                              <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.workstation} title={filters.station} className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate">
+                                <option value="">Any Location</option>
                                 {stationList.map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -336,11 +354,11 @@ const LandingPage = () => {
                           <div className="flex justify-start w-full">
                             <div className="w-full lg:w-[92%] bg-slate-50/80 p-5 rounded-2xl border border-slate-100 flex flex-col gap-3 relative shadow-sm">
                               <div className="absolute -top-3 left-6 bg-slate-800 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">FROM</div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Region</label>
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Zone</label>
                                   <div className="relative">
-                                    <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
+                                    <select name="zone" value={filters.zone} onChange={handleFilterChange} title={filters.zone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Zone</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                                   </div>
                                 </div>
@@ -352,9 +370,16 @@ const LandingPage = () => {
                                   </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Station</label>
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Workstation Type</label>
                                   <div className="relative">
-                                    <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.division} title={filters.station} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{stationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                                    <select name="workstation" value={filters.workstation} onChange={handleFilterChange} disabled={!filters.division} title={filters.workstation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Workstation</option>{workstationList.map(w => <option key={w} value={w}>{w}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Location</label>
+                                  <div className="relative">
+                                    <select name="station" value={filters.station} onChange={handleFilterChange} disabled={!filters.workstation} title={filters.station} className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Location</option>{stationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                                   </div>
                                 </div>
@@ -366,11 +391,11 @@ const LandingPage = () => {
                           <div className="flex justify-end w-full">
                             <div className="w-full lg:w-[92%] bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100 flex flex-col gap-3 relative shadow-sm">
                               <div className="absolute -top-3 right-6 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">TO</div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Region</label>
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Zone</label>
                                   <div className="relative">
-                                    <select name="desiredZone" value={filters.desiredZone} onChange={handleFilterChange} title={filters.desiredZone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Region</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
+                                    <select name="desiredZone" value={filters.desiredZone} onChange={handleFilterChange} title={filters.desiredZone} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all truncate"><option value="">Any Zone</option>{zoneList.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}</select>
                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                                   </div>
                                 </div>
@@ -382,9 +407,16 @@ const LandingPage = () => {
                                   </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Station</label>
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Workstation Type</label>
                                   <div className="relative">
-                                    <select name="desiredStation" value={filters.desiredStation} onChange={handleFilterChange} disabled={!filters.desiredDivision} title={filters.desiredStation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Station</option>{desiredStationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                                    <select name="desiredWorkstation" value={filters.desiredWorkstation} onChange={handleFilterChange} disabled={!filters.desiredDivision} title={filters.desiredWorkstation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Workstation</option>{desiredWorkstationList.map(w => <option key={w} value={w}>{w}</option>)}</select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Location</label>
+                                  <div className="relative">
+                                    <select name="desiredStation" value={filters.desiredStation} onChange={handleFilterChange} disabled={!filters.desiredWorkstation} title={filters.desiredStation} className="w-full pl-3 pr-8 py-2.5 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:opacity-50 truncate"><option value="">Any Location</option>{desiredStationList.map(s => <option key={s} value={s}>{s}</option>)}</select>
                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                                   </div>
                                 </div>
@@ -656,9 +688,9 @@ const LandingPage = () => {
               <p>© {new Date().getFullYear()} All India Mututal Transfer Portal. All rights reserved. This platform is domain-neutral.</p>
               <div className="flex items-center gap-2 opacity-60">
                 <span>Developed by</span>
-                <span className="text-primary-700">Saurav Kr Mishra</span>
+                <span className="text-primary-700">Priyanka DigiTech Services</span>
                 <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
-                <a href="mailto:imsauravkrmishra@gmail.com" className="hover:text-primary-700 transition-colors lowercase">imsauravkrmishra@gmail.com</a>
+                <a href="mailto:priyankadigitechservices@gmail.com" className="hover:text-primary-700 transition-colors lowercase">priyankadigitechservices@gmail.com</a>
               </div>
             </div>
           </div>

@@ -14,8 +14,8 @@ import {
   TrendingUp,
   Search,
   UserCheck,
-  ArrowRightLeft,
-  Settings
+  Settings,
+  MapPin
 } from 'lucide-react';
 import MatchCard from '../components/MatchCard';
 import TransferCard from '../components/TransferCard';
@@ -281,6 +281,8 @@ const DashboardPage = () => {
               </div>
             )}
           </div>
+
+
 
         </div>
       </div>

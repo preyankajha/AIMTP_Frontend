@@ -8,26 +8,16 @@ import {
   BarChart3,
   Settings,
   Database,
+  MessageSquare,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import UserAvatar from '../../components/UserAvatar';
 
 const AdminSidebar = ({ closeSidebar }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [profileImg, setProfileImg] = useState(null);
-
-  useEffect(() => {
-    if (user?.profileImage) {
-      const url = user.profileImage.startsWith('http') 
-        ? user.profileImage 
-        : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${user.profileImage}`;
-      setProfileImg(url);
-    } else {
-      setProfileImg(null);
-    }
-  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -40,6 +30,7 @@ const AdminSidebar = ({ closeSidebar }) => {
     { name: 'Matches', path: '/admin/matches', icon: Network },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
     { name: 'Master Data', path: '/admin/master-data', icon: Database },
+    { name: 'Suggestions', path: '/admin/suggestions', icon: MessageSquare },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
@@ -83,13 +74,10 @@ const AdminSidebar = ({ closeSidebar }) => {
       <div className="p-4 mt-auto border-t border-slate-800 bg-slate-950/30">
         {/* User Card */}
         <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-red-500 text-white flex items-center justify-center font-black text-sm border-2 border-slate-800 shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.3)] overflow-hidden">
-            {profileImg ? (
-              <img src={profileImg} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              user?.name?.charAt(0).toUpperCase() || 'A'
-            )}
-          </div>
+          <UserAvatar 
+            user={user} 
+            className="h-10 w-10 border-2 border-slate-800 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold truncate text-white leading-tight">{user?.name || 'Administrator'}</p>
             <p className="text-[10px] font-medium text-slate-500 truncate mt-0.5 uppercase tracking-wider">Super Admin</p>
