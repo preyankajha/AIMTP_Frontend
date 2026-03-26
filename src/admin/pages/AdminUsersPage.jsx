@@ -46,7 +46,7 @@ const AdminUsersPage = () => {
   };
 
   const handleSuspend = async (id, isCurrentlyVerified) => {
-    if (!window.confirm(`Are you sure you want to ${isCurrentlyVerified ? 'suspend' : 'activate'} this user?`)) return;
+    if (!window.confirm(`Are you sure you want to ${isCurrentlyVerified ? 'unverify' : 'verify'} this user?`)) return;
     try {
       await suspendUser(id);
       fetchUsers(); // Refresh
@@ -63,6 +63,14 @@ const AdminUsersPage = () => {
     } catch (error) {
       alert(error.response?.data?.message || 'Delete failed');
     }
+  };
+
+  const formatTotalTime = (seconds) => {
+    if (!seconds) return '< 1m';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m`;
   };
 
   const columns = [
@@ -98,14 +106,24 @@ const AdminUsersPage = () => {
         </span>
       ) : (
         <span className="flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg w-max border border-orange-100">
-          <XCircle className="h-3.5 w-3.5" /> Suspended
+          <XCircle className="h-3.5 w-3.5" /> Unverified
         </span>
       )
     },
     {
       header: 'Registered',
       accessor: 'createdAt',
-      render: (row) => <span className="text-slate-600 font-medium">{format(new Date(row.createdAt), 'MMM dd, yyyy')}</span>
+      render: (row) => <span className="text-slate-600 font-medium">{format(new Date(row.createdAt), 'MMM dd, yyyy h:mm a')}</span>
+    },
+    {
+      header: 'Activity',
+      accessor: 'loginCount',
+      render: (row) => (
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-slate-700">{row.loginCount || 0} logins</span>
+          <span className="text-[10px] font-medium text-slate-500 mt-0.5">{formatTotalTime(row.totalTimeSpent)} active</span>
+        </div>
+      )
     },
     {
       header: 'Actions',
@@ -117,7 +135,7 @@ const AdminUsersPage = () => {
               <button 
                 onClick={() => handleSuspend(row._id, row.verified)}
                 className={`p-2 rounded-lg transition-colors border ${row.verified ? 'text-orange-600 hover:bg-orange-50 border-orange-200/50' : 'text-emerald-600 hover:bg-emerald-50 border-emerald-200/50'}`}
-                title={row.verified ? "Suspend User" : "Activate User"}
+                title={row.verified ? "Unverify User" : "Verify User"}
               >
                 <ShieldAlert className="h-4 w-4" />
               </button>

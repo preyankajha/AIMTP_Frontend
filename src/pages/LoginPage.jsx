@@ -192,7 +192,7 @@ const LoginPage = () => {
                 type="email"
                 required
                 className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#002B5B]/10 focus:border-[#002B5B] placeholder-slate-400 transition-all"
-                placeholder="name@railnet.gov.in"
+                placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
               />

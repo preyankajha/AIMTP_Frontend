@@ -147,7 +147,7 @@ const DashboardPage = () => {
   const quickActions = [
     { label: 'Post New Transfer Request', path: '/transfers/create', icon: Plus },
     { label: 'Search Transfer Partners', path: '/transfers/search', icon: Search },
-    { label: 'Update Profile', path: '/profile', icon: UserCheck },
+    { label: 'Update Profile', path: '/profile?edit=true', icon: UserCheck },
   ];
 
   return (
@@ -192,11 +192,11 @@ const DashboardPage = () => {
             </p>
           </div>
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/profile?edit=true')}
             className="px-8 py-4 bg-primary-900 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary-900/20 hover:bg-slate-900 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2"
           >
             <Settings className="h-4 w-4" />
-            Go to Settings
+            Update Working Profile
           </button>
         </div>
       )}

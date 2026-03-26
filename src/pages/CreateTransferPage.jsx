@@ -4,7 +4,7 @@ import { createTransfer, getTransferById, updateTransfer } from '../services/tra
 import { useAuth } from '../hooks/useAuth';
 import { useMasterData } from '../context/MasterDataContext';
 import SearchableSelect from '../components/SearchableSelect';
-import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings, Phone } from 'lucide-react';
+import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings, Phone, Copy } from 'lucide-react';
 
 
 /**
@@ -248,15 +248,42 @@ const CreateTransferPage = () => {
   };
 
   const addLocation = () => {
+    if (formData.desiredLocations.length >= 20) {
+      setError('You can add up to 20 desired locations only.');
+      return;
+    }
     setFormData({
       ...formData,
-      desiredLocations: [...formData.desiredLocations, { zone: '', division: '', workstation: '', location: '', priority: formData.desiredLocations.length + 1 }]
+      desiredLocations: [...formData.desiredLocations, { zone: '', division: '', workstation: '', location: '', priority: formData.desiredLocations.length + 1 > 10 ? 10 : formData.desiredLocations.length + 1 }]
     });
     setOtherInputs({
       ...otherInputs,
       desiredLocations: [...otherInputs.desiredLocations, { zone: '', division: '', workstation: '', location: '' }]
     });
   };
+
+  const duplicateLocation = (index) => {
+    if (formData.desiredLocations.length >= 20) {
+      setError('You can add up to 20 desired locations only.');
+      return;
+    }
+    const locToCopy = formData.desiredLocations[index];
+    const otherToCopy = otherInputs.desiredLocations[index] || { zone: '', division: '', workstation: '', station: '' };
+    
+    setFormData({
+      ...formData,
+      desiredLocations: [...formData.desiredLocations, { 
+        ...locToCopy, 
+        priority: formData.desiredLocations.length + 1 > 10 ? 10 : formData.desiredLocations.length + 1 
+      }]
+    });
+    
+    setOtherInputs({
+      ...otherInputs,
+      desiredLocations: [...otherInputs.desiredLocations, { ...otherToCopy }]
+    });
+  };
+
 
   const removeLocation = (index) => {
     if (formData.desiredLocations.length <= 1) return;
@@ -592,11 +619,11 @@ const CreateTransferPage = () => {
         </div>
         <h1 className="text-4xl font-black text-slate-900 mb-6 tracking-tight">Access Locked</h1>
         <p className="text-slate-600 font-medium leading-relaxed mb-12 text-lg max-w-lg mx-auto">
-           You must complete your <span className="text-slate-900 font-black">Official Working Information</span> in profile settings before you can create any transfer requests.
+           You must complete your <span className="text-slate-900 font-black">Official Working Information</span> in profile before you can create any transfer requests.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
            <Link
-             to="/settings"
+             to="/profile?edit=true"
              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-900 text-white px-10 py-4 rounded-2xl font-black text-sm shadow-2xl shadow-primary-900/20 hover:bg-slate-900 transition-all active:scale-95"
            >
              <Settings className="h-5 w-5" />
@@ -940,8 +967,8 @@ const CreateTransferPage = () => {
                           <span className="text-xs font-black text-primary-600">{index + 1}</span>
                         </div>
 
-                          <div className="space-y-4 md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="space-y-2">
+                          <div className="space-y-6 md:space-y-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
+                            <div className="space-y-2 flex flex-col justify-end">
                               <div className="flex justify-between items-end mb-1">
                                 <label className="block text-sm font-bold text-slate-700">Region/Zone</label>
                                 <SuggestLink type="Zone" />
@@ -966,8 +993,8 @@ const CreateTransferPage = () => {
                                 />
                               )}
                             </div>
-                            <div className="space-y-2">
-                              <label className="block text-sm font-bold text-slate-700">Division</label>
+                            <div className="space-y-2 flex flex-col justify-end">
+                              <label className="block text-sm font-bold text-slate-700 mb-1">Division</label>
                               <SearchableSelect
                                 value={loc.division}
                                 onChange={v => handleLocationChange(index, 'division', v)}
@@ -986,8 +1013,8 @@ const CreateTransferPage = () => {
                                 />
                               )}
                             </div>
-                            <div className="space-y-2">
-                              <label className="block text-sm font-bold text-slate-700">Workstation Type</label>
+                            <div className="space-y-2 flex flex-col justify-end">
+                              <label className="block text-sm font-bold text-slate-700 mb-1">Workstation Type</label>
                               <SearchableSelect
                                 value={loc.workstation}
                                 onChange={v => handleLocationChange(index, 'workstation', v)}
@@ -1006,7 +1033,7 @@ const CreateTransferPage = () => {
                                 />
                               )}
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex flex-col justify-end">
                               <div className="flex justify-between items-end mb-1">
                                 <label className="block text-sm font-bold text-slate-700">Location</label>
                                 <SuggestLink type="Location" initialData={{ zone: loc.zone, division: loc.division, workstationType: loc.workstation }} />
@@ -1031,18 +1058,18 @@ const CreateTransferPage = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 space-y-2">
-                              <label className="block text-sm font-bold text-slate-700">Priority</label>
-                              <div className="flex flex-wrap items-center gap-2 w-full">
+                          <div className="flex flex-col md:flex-row md:items-end gap-6">
+                            <div className="flex-1 space-y-3">
+                              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Set Priority</label>
+                              <div className="grid grid-cols-5 sm:flex sm:flex-wrap items-center gap-2 w-full">
                                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (
                                   <button
                                     key={p}
                                     type="button"
                                     onClick={() => handleLocationChange(index, 'priority', p)}
-                                    className={`flex-1 min-w-[3.5rem] h-11 flex items-center justify-center rounded-xl text-[10px] font-black transition-all ${
+                                    className={`flex-1 sm:flex-none sm:min-w-[2.8rem] h-11 flex items-center justify-center rounded-xl text-[10px] font-black transition-all ${
                                       Number(loc.priority) === p 
-                                        ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 scale-[1.02]' 
+                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 scale-[1.05]' 
                                         : 'bg-white text-slate-400 border border-slate-200 hover:border-primary-300 hover:text-primary-600 shadow-sm'
                                     }`}
                                   >
@@ -1051,19 +1078,30 @@ const CreateTransferPage = () => {
                                 ))}
                               </div>
                             </div>
-                            {formData.desiredLocations.length > 1 && (
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => removeLocation(index)}
-                                className="p-3 mt-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                onClick={() => duplicateLocation(index)}
+                                className="flex-1 sm:flex-none px-4 py-3 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 rounded-xl transition-all shadow-sm font-black text-[10px] uppercase tracking-wider"
                               >
-                                <Trash2 className="h-5 w-5" />
+                                <Copy className="h-3.5 w-3.5" />
+                                Duplicate
                               </button>
-                            )}
+                              {formData.desiredLocations.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeLocation(index)}
+                                  className="flex-1 sm:flex-none px-4 py-3 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 rounded-xl transition-all shadow-sm font-black text-[10px] uppercase tracking-wider"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Remove
+                                </button>
+                              )}
+                            </div>
                           </div>
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
 
                   <div className="flex justify-end mt-4">
                     <button

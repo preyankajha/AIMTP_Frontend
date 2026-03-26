@@ -31,7 +31,7 @@ const InputField = ({ name, label, value, onChange, type = 'text', placeholder =
 );
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({ name: '', mobile: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', mobile: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,19 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Email domain validation
+    const allowedDomains = ['gmail.com', 'hotmail.com', 'zohomail.com'];
+    const emailDomain = formData.email.split('@')[1]?.toLowerCase();
+    if (!allowedDomains.includes(emailDomain)) {
+      setError('Registration is currently restricted to Gmail, Hotmail, and Zohomail users only.');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     if (!acceptedDeclaration) {
       setError('Please accept the terms and conditions to proceed.');
       return;
@@ -188,10 +201,10 @@ const RegisterPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 gap-5">
-                <InputField name="name" label="Full Name" value={formData.name} onChange={handleChange} placeholder="John Doe" icon={User} />
-                <InputField name="mobile" label="Mobile Number" value={formData.mobile} onChange={handleChange} type="tel" placeholder="9876543210" icon={Phone} />
+                <InputField name="name" label="Full Name" value={formData.name} onChange={handleChange} placeholder="Rahul Sharma" icon={User} />
+                <InputField name="mobile" label="Mobile Number" value={formData.mobile} onChange={handleChange} type="tel" placeholder="98XXXXXX10" icon={Phone} />
                 <div>
-                  <InputField name="email" label="Email Address" value={formData.email} onChange={handleChange} type="email" placeholder="name@railnet.gov.in" icon={Mail} />
+                  <InputField name="email" label="Email Address" value={formData.email} onChange={handleChange} type="email" placeholder="example@email.com" icon={Mail} />
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2">Password</label>
@@ -207,6 +220,19 @@ const RegisterPage = () => {
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2">Retype Password</label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <input
+                      name="confirmPassword" type={showPassword ? 'text' : 'password'} required
+                      className="w-full px-4 py-3 pl-10 pr-11 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 placeholder-slate-400 transition-all"
+                      placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange}
+                    />
                   </div>
                 </div>
               </div>

@@ -6,12 +6,30 @@ import {
   ExternalLink, MessageSquare, Clock, ArrowRight,
   Shield, CheckCircle2, XCircle
 } from 'lucide-react';
-import { getUserDetails } from '../services/adminService';
+import { getUserDetails, suspendUser } from '../services/adminService';
 
 const UserDetailsModal = ({ isOpen, onClose, userId }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [suspending, setSuspending] = useState(false);
+
+  const handleToggleSuspend = async () => {
+    if (!data?.user?._id) return;
+    setSuspending(true);
+    try {
+      await suspendUser(data.user._id);
+      // Update local state instead of refetching all
+      setData(prev => ({
+        ...prev,
+        user: { ...prev.user, isSuspended: !prev.user.isSuspended }
+      }));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update user status');
+    } finally {
+      setSuspending(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -105,14 +123,25 @@ const UserDetailsModal = ({ isOpen, onClose, userId }) => {
                   </div>
 
                   <div className="flex-1 text-center sm:text-left">
-                    <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-2">
-                       <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${data.user.role === 'admin' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-primary-50 text-primary-600 border-primary-200'}`}>
-                         {data.user.role}
-                       </span>
-                       <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${data.user.verified ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
-                         {data.user.verified ? 'Verified Active' : 'Account Suspended'}
-                       </span>
-                    </div>
+                     <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-2">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${data.user.role === 'admin' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-primary-50 text-primary-600 border-primary-200'}`}>
+                          {data.user.role}
+                        </span>
+                        {data.user.isSuspended ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border bg-rose-50 text-rose-600 border-rose-200 flex items-center gap-1.5">
+                            <XCircle className="h-2.5 w-2.5" /> Account Suspended
+                          </span>
+                        ) : (
+                          <>
+                            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${data.user.verified ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
+                              {data.user.verified ? 'Verified User' : 'Email Pending'}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-600 border-emerald-200">
+                              Active Member
+                            </span>
+                          </>
+                        )}
+                     </div>
                     <h1 className="text-3xl font-black text-slate-900 leading-tight mb-2">{data.user.name}</h1>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-y-2 gap-x-4 text-sm font-bold text-slate-500">
                       <span className="flex items-center gap-1.5"><Mail className="h-4 w-4 text-slate-300" /> {data.user.email}</span>
@@ -198,14 +227,43 @@ const UserDetailsModal = ({ isOpen, onClose, userId }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end">
+        <div className="p-6 border-t border-slate-100 bg-white flex items-center justify-between gap-4">
           <button 
             onClick={onClose}
-            className="px-8 py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95 flex items-center gap-2"
+            className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-black transition-all active:scale-95 flex items-center gap-2"
           >
-            Acknowledge Profile
-            <ArrowRight className="h-4 w-4" />
+            Close Details
           </button>
+          
+          <div className="flex items-center gap-3">
+            {data?.user?.role !== 'admin' && (
+              <button 
+                onClick={handleToggleSuspend}
+                disabled={suspending}
+                className={`px-6 py-3.5 rounded-2xl text-xs font-black shadow-lg transition-all active:scale-95 flex items-center gap-2 ${
+                  data?.user?.isSuspended 
+                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 shadow-emerald-900/5' 
+                    : 'bg-rose-50 text-rose-600 hover:bg-rose-100 shadow-rose-900/5'
+                }`}
+              >
+                {suspending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : data?.user?.isSuspended ? (
+                  <><CheckCircle2 className="h-4 w-4" /> Unsuspend Member</>
+                ) : (
+                  <><ShieldAlert className="h-4 w-4" /> Suspend Member</>
+                )}
+              </button>
+            )}
+
+            <button 
+              onClick={onClose}
+              className="px-8 py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95 flex items-center gap-2"
+            >
+              Acknowledge Profile
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>,

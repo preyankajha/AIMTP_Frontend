@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { Menu, X, Bell, Search as SearchIcon, Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import UserAvatar from './UserAvatar';
 import { getNotifications } from '../services/notificationService';
 
 const DashboardLayout = () => {
@@ -84,9 +85,9 @@ const DashboardLayout = () => {
             </Link>
             <Link 
               to="/profile"
-              className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-xs border border-emerald-100 shadow-sm shrink-0 cursor-pointer hover:scale-105 transition-transform"
+              className="shrink-0 cursor-pointer hover:scale-105 transition-transform"
             >
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              <UserAvatar user={user} className="h-8 w-8 rounded-lg" />
             </Link>
           </div>
         </header>

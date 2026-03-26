@@ -4,6 +4,60 @@ import AdminTable from '../components/AdminTable';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
+const TransferRouteCell = ({ row }) => {
+  const [expanded, setExpanded] = useState(false);
+  const primaryDest = row.desiredLocations?.[0] || {};
+  const extraDestinations = row.desiredLocations?.slice(1) || [];
+  const hasMore = extraDestinations.length > 0;
+
+  return (
+    <div className="flex flex-col gap-1.5 py-1">
+      <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+        <span className="text-red-500 whitespace-nowrap">{row.currentStation || row.currentDivision}</span>
+        <span className="text-slate-300 font-light">→</span>
+        <div className="flex items-center gap-2">
+          <span className="text-emerald-500 whitespace-nowrap">{primaryDest.station || primaryDest.division || 'Any'}</span>
+          {hasMore && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+              className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border transition-all cursor-pointer select-none active:scale-90 ${
+                expanded 
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg' 
+                  : 'bg-emerald-100 text-emerald-600 border-emerald-200 hover:bg-emerald-200'
+              }`}
+            >
+              {expanded ? 'CLOSE LIST' : `+${extraDestinations.length} MORE`}
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {!expanded ? (
+        <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-tighter">
+          <span>{row.currentZone}</span>
+          <span className="text-slate-200 font-black">/</span>
+          <span>{primaryDest.zone || 'ANY'}</span>
+        </p>
+      ) : (
+        <div className="mt-2 space-y-2 border-l-2 border-emerald-500/30 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 opacity-60">Full Preference List</p>
+          {row.desiredLocations.map((loc, i) => (
+            <div key={i} className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className={`text-[8px] font-black px-1 rounded ${i === 0 ? 'bg-primary-100 text-primary-600' : 'bg-slate-100 text-slate-500'}`}>P{i+1}</span>
+                <span className="text-[11px] font-black text-slate-800">{loc.station || loc.location}</span>
+              </div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter ml-6">
+                {loc.zone} <span className="opacity-30 mx-1">•</span> {loc.division}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminTransfersPage = () => {
   const [data, setData] = useState({ transfers: [], total: 0, page: 1, pages: 1 });
   const [loading, setLoading] = useState(true);
@@ -63,18 +117,7 @@ const AdminTransfersPage = () => {
     {
       header: 'Route (From → To)',
       accessor: 'route',
-      render: (row) => (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <span className="text-red-500">{row.currentStation || row.currentDivision}</span>
-            <span className="text-slate-400">→</span>
-            <span className="text-emerald-500">{row.desiredStation || row.desiredDivision}</span>
-          </div>
-          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">
-            {row.currentZone} to {row.desiredZone}
-          </p>
-        </div>
-      )
+      render: (row) => <TransferRouteCell row={row} />
     },
     {
       header: 'Posted On',
@@ -85,7 +128,7 @@ const AdminTransfersPage = () => {
       header: 'Actions',
       className: 'text-right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-end gap-2 group-hover:opacity-100 transition-opacity">
           <button 
             className="p-2 rounded-lg text-orange-600 hover:bg-orange-50 border border-orange-200/50 transition-colors"
             title="Flag as Suspicious (Demo)"

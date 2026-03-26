@@ -18,6 +18,11 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Force unverified users to go to the profile page to verify email
+  if (user && !user.verified && location.pathname !== '/profile' && location.pathname !== '/settings') {
+    return <Navigate to="/profile" replace />;
+  }
+
   return children;
 };
 

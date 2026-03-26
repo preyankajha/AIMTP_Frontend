@@ -13,7 +13,8 @@ import {
   Repeat,
   LogOut,
   ShieldCheck,
-  Database
+  Database,
+  Briefcase
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import UserAvatar from './UserAvatar';
@@ -39,6 +40,7 @@ const Sidebar = ({ closeSidebar }) => {
   ];
 
   const bottomItems = [
+    { name: 'Working Profile', path: '/profile?edit=true', icon: Briefcase },
     { name: 'Settings', path: '/settings', icon: Settings },
     { name: 'Help & Support', path: '/help', icon: HelpCircle },
   ];
