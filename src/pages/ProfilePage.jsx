@@ -571,6 +571,15 @@ const ProfilePage = () => {
                         options={categories.map(c => ({ value: c, label: c }))}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Appointment</label>
+                      <input 
+                        type="date"
+                        value={profileForm.appointmentDate}
+                        onChange={(e) => setProfileForm({ ...profileForm, appointmentDate: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all font-sans"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-4">

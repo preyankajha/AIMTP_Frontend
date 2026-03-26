@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Repeat, ArrowRight, Search, Users, ShieldCheck, Activity, RotateCcw, ChevronDown, MapPin } from 'lucide-react';
+import { Repeat, ArrowRight, Search, Users, ShieldCheck, Activity, RotateCcw, ChevronDown, MapPin, Send, MessageCircle, Facebook } from 'lucide-react';
 import { getPublicTransfers } from '../services/transferService';
 import TransferCard from '../components/TransferCard';
 
@@ -673,12 +673,32 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h4 className="text-slate-900 font-bold text-sm mb-6 uppercase tracking-wider">Popular Regions</h4>
+              <h4 className="text-slate-900 font-bold text-sm mb-6 uppercase tracking-wider">Social</h4>
               <ul className="space-y-4 text-sm font-semibold text-slate-500">
-                <li><a href="#" className="hover:text-primary-600 transition-colors">Central Region</a></li>
-                <li><a href="#" className="hover:text-primary-600 transition-colors">Western Region</a></li>
-                <li><a href="#" className="hover:text-primary-600 transition-colors">Northern Region</a></li>
-                <li><a href="#" className="hover:text-primary-600 transition-colors">Southern Region</a></li>
+                <li>
+                  <a href="#" className="flex items-center gap-2 hover:text-primary-600 transition-colors">
+                    <div className="h-7 w-7 bg-primary-50 rounded-lg flex items-center justify-center text-primary-600">
+                      <Send className="h-4 w-4" />
+                    </div>
+                    Telegram
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center gap-2 hover:text-primary-600 transition-colors">
+                    <div className="h-7 w-7 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600">
+                      <MessageCircle className="h-4 w-4" />
+                    </div>
+                    WhatsApp Channel
+                  </a>
+                </li>
+                <li>
+                  <a href="https://www.facebook.com/AllIndiaMutualPortal" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-600 transition-colors">
+                    <div className="h-7 w-7 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                      <Facebook className="h-4 w-4" />
+                    </div>
+                    Facebook Page
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

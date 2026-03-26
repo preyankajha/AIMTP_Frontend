@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { createTransfer, getTransferById, updateTransfer } from '../services/transferService';
 import { useAuth } from '../hooks/useAuth';
 import { useMasterData } from '../context/MasterDataContext';
 import SearchableSelect from '../components/SearchableSelect';
-import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings, Phone, Copy } from 'lucide-react';
+import { ArrowRight, MapPin, Send, Building2, Briefcase, Loader2, Plus, Trash2, ChevronDown, UserCheck, AlertCircle, Settings, Phone, Copy, Edit3 } from 'lucide-react';
 
 
 /**
@@ -15,9 +16,9 @@ const SelectInput = ({ label, name, value, options, placeholder, onChange, other
   const isOtherSelected = value === 'Other' || value === 'OTHER';
 
   // Normalise to {value, label}
-  const normOpts = options.map(o =>
-    typeof o === 'string' ? { value: o, label: o } : o
-  );
+  const normOpts = Array.isArray(options) 
+    ? options.map(o => typeof o === 'string' ? { value: o, label: o } : o)
+    : [];
 
   // Filter out any existing "Other" options to avoid case-insensitive duplicates, 
   // then append a single standard "Other" at the bottom (except for modeOfSelection).
@@ -114,6 +115,10 @@ const CreateTransferPage = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [language, setLanguage] = useState('en');
   
+  // Section locking state
+  const [isProfessionalLocked, setIsProfessionalLocked] = useState(false);
+  const [isPostingLocked, setIsPostingLocked] = useState(false);
+  
   const { 
     loading: masterLoading, 
     regionData, 
@@ -122,7 +127,8 @@ const CreateTransferPage = () => {
     categories, 
     payLevels, 
     modeOfSelection,
-    getZoneList 
+    getZoneList,
+    workstationTypes
   } = useMasterData();
 
   const [fetching, setFetching] = useState(isEditMode);
@@ -154,8 +160,12 @@ const CreateTransferPage = () => {
           whatsapp: user.whatsapp || prev.contactOptions.whatsapp,
         }
       }));
+
+      // Lock sections if they are prefilled
+      if (user.department && user.designation) setIsProfessionalLocked(true);
+      if (user.currentZone && user.currentDivision) setIsPostingLocked(true);
     }
-  }, [user, isEditMode, masterLoading]);
+  }, [isEditMode, user, masterLoading]);
 
   // Derived options for cascading dropdowns
   const deptList = [
@@ -185,8 +195,6 @@ const CreateTransferPage = () => {
   const currentStationList = formData.currentZone && formData.currentDivision && regionData[formData.currentZone]?.divisions[formData.currentDivision]
     ? regionData[formData.currentZone].divisions[formData.currentDivision]
     : [];
-
-  const { workstationTypes } = useMasterData();
 
   const getLocOptions = (zone, division, workstationType) => {
     let divs = (zone && regionData?.[zone]) ? Object.keys(regionData[zone].divisions) : [];
@@ -242,7 +250,7 @@ const CreateTransferPage = () => {
 
   const handleOtherLocationChange = (index, field, value) => {
     const newOther = [...otherInputs.desiredLocations];
-    if (!newOther[index]) newOther[index] = { zone: '', division: '', station: '' };
+    if (!newOther[index]) newOther[index] = { zone: '', division: '', workstation: '', station: '' };
     newOther[index][field] = value;
     setOtherInputs({ ...otherInputs, desiredLocations: newOther });
   };
@@ -470,6 +478,8 @@ const CreateTransferPage = () => {
         designation: user.designation,
         currentZone: user.currentZone,
         currentDivision: user.currentDivision,
+        currentWorkstation: user.currentWorkstation,
+        currentLocation: user.currentLocation,
         currentStation: user.currentStation,
         category: user.category,
         payLevel: user.payLevel,
@@ -488,8 +498,9 @@ const CreateTransferPage = () => {
     if (name === 'department') setFormData(prev => ({ ...prev, subDepartment: '', designation: '' }));
     if (name === 'subDepartment') setFormData(prev => ({ ...prev, designation: '' }));
     
-    if (name === 'currentZone') setFormData(prev => ({ ...prev, currentDivision: '', currentStation: '' }));
-    if (name === 'currentDivision') setFormData(prev => ({ ...prev, currentStation: '' }));
+    if (name === 'currentZone') setFormData(prev => ({ ...prev, currentDivision: '', currentWorkstation: '', currentLocation: '', currentStation: '' }));
+    if (name === 'currentDivision') setFormData(prev => ({ ...prev, currentWorkstation: '', currentLocation: '', currentStation: '' }));
+    if (name === 'currentWorkstation') setFormData(prev => ({ ...prev, currentLocation: '', currentStation: '' }));
 
     if (name.startsWith('contact_')) {
       const field = name.replace('contact_', '');
@@ -557,7 +568,7 @@ const CreateTransferPage = () => {
       }
       
       // Update local profile context so it reflects the new linked data
-      const profileFields = ['sector', 'department', 'subDepartment', 'designation', 'currentZone', 'currentDivision', 'currentStation', 'payLevel', 'gradePay', 'basicPay', 'category', 'workplaceRemark'];
+      const profileFields = ['sector', 'department', 'subDepartment', 'designation', 'currentZone', 'currentDivision', 'currentWorkstation', 'currentLocation', 'currentStation', 'payLevel', 'gradePay', 'basicPay', 'category', 'workplaceRemark'];
       const profileUpdates = {};
       profileFields.forEach(f => {
         if (finalData[f] !== undefined) profileUpdates[f] = finalData[f];
@@ -641,48 +652,68 @@ const CreateTransferPage = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in pb-32">
-      {/* Terms Modal */}
-      {showTermsModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-hidden">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-scale-up max-h-[90vh] flex flex-col">
-            <div className="p-8 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-200">
-              <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b border-slate-50">
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">{termsContent[language].title}</h3>
-                <button 
-                  onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-                  className="text-[10px] font-black uppercase tracking-widest text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100 transition-colors"
-                >
-                  {termsContent[language].langSwitch}
-                </button>
-              </div>
-              
-              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8 font-medium italic">
+    <div className="max-w-6xl mx-auto px-2 sm:px-4 py-8 animate-fade-in pb-32">
+      {/* Terms Modal — Rendered via Portal at the root */}
+      {showTermsModal && createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-fade-in" 
+            onClick={() => setShowTermsModal(false)} 
+          />
+          
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-zoom-in max-h-[85vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+               <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">{termsContent[language].title}</h3>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Read carefully before proceeding</p>
+               </div>
+               <div className="flex items-center gap-3">
+                 <button 
+                    onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+                    className="text-[10px] font-black uppercase tracking-widest text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100 transition-colors"
+                  >
+                    {termsContent[language].langSwitch}
+                  </button>
+                  <button 
+                    onClick={() => setShowTermsModal(false)}
+                    className="h-10 w-10 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all hover:rotate-90 active:scale-90"
+                  >
+                    <span className="text-xl font-black line-height-1">&times;</span>
+                  </button>
+               </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-200 flex-1">
+              <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 mb-8 font-medium italic">
                 <p className="text-slate-600 text-sm leading-relaxed">
                   {termsContent[language].content}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 sticky bottom-0 bg-white pt-4">
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
                     setAcceptedDeclaration(true);
                     setShowTermsModal(false);
                   }}
-                  className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-2xl shadow-xl shadow-primary-600/20 transition-all active:scale-[0.98]"
+                  className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-2xl shadow-xl shadow-primary-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                 >
+                  <Send className="h-4 w-4" />
                   {termsContent[language].accept}
                 </button>
                 <button
                   onClick={() => setShowTermsModal(false)}
                   className="w-full py-2 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
                 >
-                  Close
+                  I'm not sure yet
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="mb-8 border-b border-slate-100 pb-6">
@@ -755,10 +786,45 @@ const CreateTransferPage = () => {
                   <div className="bg-primary-100 p-2 rounded-lg">
                     <Briefcase className="h-5 w-5 text-primary-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-slate-800">Professional Details</h2>
+                  <div className="flex-1 flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-800">Professional Details</h2>
+                    {!isEditMode && user?.department && (
+                      <button 
+                        type="button"
+                        onClick={() => setIsProfessionalLocked(!isProfessionalLocked)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                          isProfessionalLocked 
+                            ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' 
+                            : 'bg-primary-900 text-white shadow-lg shadow-primary-900/10'
+                        }`}
+                      >
+                        {isProfessionalLocked ? <><Edit3 className="h-3 w-3" /> Modify for This Request</> : 'Lock Details'}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                {isProfessionalLocked ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-slate-50/50 border border-slate-100 rounded-3xl animate-in fade-in zoom-in-95 duration-200">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Dept / Sub-Dept</p>
+                      <p className="text-sm font-black text-slate-700">{formData.department} / {formData.subDepartment}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Designation</p>
+                      <p className="text-sm font-black text-slate-700">{formData.designation}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pay Info</p>
+                      <p className="text-sm font-black text-slate-700">{formData.payLevel} (₹{formData.basicPay})</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Appt. Date</p>
+                      <p className="text-sm font-black text-slate-700">{formData.appointmentDate || '—'}</p>
+                    </div>
+                  </div>
+                ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
                   <SelectInput 
                     label="Department" 
                     name="department" 
@@ -811,6 +877,7 @@ const CreateTransferPage = () => {
                       name="gradePay"
                       value={formData.gradePay}
                       onChange={handleChange}
+                      onFocus={(e) => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       placeholder="e.g. 4200"
                       className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all font-medium"
                     />
@@ -824,6 +891,7 @@ const CreateTransferPage = () => {
                         name="basicPay"
                         value={formData.basicPay}
                         onChange={handleChange}
+                        onFocus={(e) => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                         required
                         min="18000"
                         placeholder="Min. 18000"
@@ -849,32 +917,98 @@ const CreateTransferPage = () => {
                       className="block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all font-medium"
                     />
                   </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Section 2: Current Posting Details */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="bg-emerald-100 p-2 rounded-lg">
+                    <MapPin className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-800">Current Posting</h2>
+                    {!isEditMode && user?.currentZone && (
+                       <button 
+                        type="button"
+                        onClick={() => setIsPostingLocked(!isPostingLocked)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                          isPostingLocked 
+                            ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' 
+                            : 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/10'
+                        }`}
+                      >
+                        {isPostingLocked ? <><Edit3 className="h-3 w-3" /> Modify Posting</> : 'Lock Posting'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Identification / Current Posting Block */}
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                   <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex items-center gap-5">
-                      <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-emerald-50 text-emerald-600">
-                         <UserCheck className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Profile Verified</h4>
-                        <p className="text-sm font-bold text-slate-700">Submit request as: {user?.designation || 'Staff'}</p>
-                        <p className="text-[11px] text-slate-500 font-medium">Auto-prefilled from your official profile.</p>
-                      </div>
-                   </div>
-
-                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 flex items-center gap-5">
-                      <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 text-slate-400">
-                         <MapPin className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Current Posting</h4>
-                        <p className="text-sm font-bold text-slate-700">{formData.currentStation} ({formData.currentZone})</p>
-                        <p className="text-[11px] text-slate-500 font-medium">{formData.currentDivision} Division</p>
-                      </div>
-                   </div>
+                {isPostingLocked ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-emerald-50/30 border border-emerald-100 rounded-3xl animate-in fade-in zoom-in-95 duration-200">
+                    <div>
+                      <p className="text-[9px] font-black text-emerald-600/50 uppercase tracking-widest">Region (Zone)</p>
+                      <p className="text-sm font-black text-slate-700">{formData.currentZone}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-emerald-600/50 uppercase tracking-widest">Division</p>
+                      <p className="text-sm font-black text-slate-700">{formData.currentDivision}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-emerald-600/50 uppercase tracking-widest">Workstation</p>
+                      <p className="text-sm font-black text-slate-700">{formData.currentWorkstation}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-emerald-600/50 uppercase tracking-widest">Station/Unit</p>
+                      <p className="text-sm font-black text-slate-700">{formData.currentStation}</p>
+                    </div>
+                  </div>
+                ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <SelectInput 
+                    label="Current Zone" 
+                    name="currentZone" 
+                    value={formData.currentZone} 
+                    options={zoneList} 
+                    onChange={handleChange}
+                    otherValue={otherInputs.currentZone}
+                    onOtherChange={handleOtherChange}
+                    suggestLink={<SuggestLink type="Zone" />}
+                  />
+                  <SelectInput 
+                    label="Current Division" 
+                    name="currentDivision" 
+                    value={formData.currentDivision} 
+                    options={currentDivList} 
+                    onChange={handleChange}
+                    otherValue={otherInputs.currentDivision}
+                    onOtherChange={handleOtherChange}
+                    disabled={!formData.currentZone}
+                  />
+                  <SelectInput 
+                    label="Current Workstation" 
+                    name="currentWorkstation" 
+                    value={formData.currentWorkstation} 
+                    options={workstationTypes} 
+                    onChange={handleChange}
+                    otherValue={otherInputs.currentWorkstation}
+                    onOtherChange={handleOtherChange}
+                    disabled={!formData.currentDivision}
+                  />
+                  <SelectInput 
+                    label="Current Station/Unit" 
+                    name="currentStation" 
+                    value={formData.currentStation} 
+                    options={currentStationList} 
+                    onChange={handleChange}
+                    otherValue={otherInputs.currentStation}
+                    onOtherChange={handleOtherChange}
+                    suggestLink={<SuggestLink type="Location" initialData={{ zone: formData.currentZone, division: formData.currentDivision, workstationType: formData.currentWorkstation }} />}
+                    disabled={!formData.currentWorkstation}
+                  />
                 </div>
+                )}
               </div>
               
               {/* Contact Information Section moved here */}
@@ -1125,21 +1259,22 @@ const CreateTransferPage = () => {
                       type="checkbox" 
                       id="declaration"
                       checked={acceptedDeclaration}
-                      readOnly
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowTermsModal(true);
+                      onChange={() => {
+                         if (!acceptedDeclaration) {
+                           setShowTermsModal(true);
+                         } else {
+                           setAcceptedDeclaration(false);
+                         }
                       }}
-                      className="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 transition-all cursor-pointer"
+                      className="h-6 w-6 rounded-lg border-slate-300 text-primary-600 focus:ring-primary-500 transition-all cursor-pointer shadow-sm"
                     />
                   </div>
                   <label 
                     htmlFor="declaration" 
-                    onClick={() => setShowTermsModal(true)}
                     className="text-sm font-medium text-slate-600 cursor-pointer select-none leading-relaxed group-hover:text-slate-800 transition-colors"
                   >
                     I hereby declare that the information provided above is true and correct. 
-                    I agree to the <span className="font-bold text-red-500 underline decoration-2 underline-offset-4 decoration-red-200 hover:decoration-red-500">Self-Declaration Terms</span> and acknowledge that final transfer depends on departmental status.
+                    I agree to the <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-red-500 underline decoration-2 underline-offset-4 decoration-red-200 hover:decoration-red-500 cursor-pointer">Self-Declaration Terms</button> and acknowledge that final transfer depends on departmental status.
                   </label>
                 </div>
               </div>

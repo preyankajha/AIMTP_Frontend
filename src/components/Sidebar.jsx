@@ -58,7 +58,7 @@ const Sidebar = ({ closeSidebar }) => {
       {/* Action Button */}
       <div className="px-4 mb-8">
         <button
-          onClick={() => navigate('/transfers/create')}
+          onClick={() => { navigate('/transfers/create'); if(closeSidebar) closeSidebar(); }}
           className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/10 transition-all active:scale-95 text-sm"
         >
           <Plus className="h-5 w-5" />
@@ -76,6 +76,7 @@ const Sidebar = ({ closeSidebar }) => {
             <NavLink
               key={item.name}
               to={item.path}
+              onClick={() => { if(closeSidebar) closeSidebar(); }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive
                   ? 'bg-white/10 text-white font-bold border border-white/5'
@@ -93,6 +94,7 @@ const Sidebar = ({ closeSidebar }) => {
             <div className="pt-4 mt-4 border-t border-white/10">
               <NavLink
                 to="/admin"
+                onClick={() => { if(closeSidebar) closeSidebar(); }}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-3 rounded-xl transition-all border ${isActive
                     ? 'bg-red-500/20 text-red-400 font-bold border-red-500/30'
@@ -115,6 +117,7 @@ const Sidebar = ({ closeSidebar }) => {
             <NavLink
               key={item.name}
               to={item.path}
+              onClick={() => { if(closeSidebar) closeSidebar(); }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive
                   ? 'bg-white/10 text-white font-bold'

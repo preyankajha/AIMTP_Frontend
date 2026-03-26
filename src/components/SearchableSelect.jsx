@@ -79,7 +79,19 @@ const SearchableSelect = ({
   useLayoutEffect(() => {
     if (open) {
       updatePosition();
-      const timer = setTimeout(() => inputRef.current?.focus(), 0);
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+        
+        // Auto-scroll the focused element to the center of the screen
+        // This keeps it above the mobile keypad for better accessibility.
+        if (wrapperRef.current) {
+          wrapperRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 100);
+
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
       return () => {
